@@ -22,6 +22,10 @@ import {
   CreditCard,
   Sparkles,
   Shield,
+  Sun,
+  Moon,
+  Wrench,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -29,13 +33,15 @@ import { useCartStore, useUIStore } from "@/store";
 import { useMockSession } from "@/lib/mock-auth";
 import { clearMockSession } from "@/lib/mock-auth";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/providers/theme-provider";
 
 const publicNavItems = [
   { href: "/", label: "Trang chủ", icon: Home },
-  // { href: "/tai-khoan", label: "Tài khoản", icon: User },
-  { href: "/dich-vu-facebook", label: "Dịch vụ Facebook", icon: Sparkles },
+  { href: "/dich-vu-mxh", label: "Dịch vụ MXH", icon: Sparkles },
+  { href: "/dich-vu-tuong-tac", label: "Dịch vụ tương tác", icon: Activity },
   { href: "/nap-tien", label: "Nạp tiền", icon: Wallet },
   { href: "/lich-su", label: "Lịch sử", icon: History },
+  { href: "/tien-ich", label: "Tiện ích", icon: Wrench },
   { href: "/lien-he", label: "Liên hệ", icon: Shield },
 ];
 
@@ -52,7 +58,8 @@ const adminNavItems = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useMockSession();
+  const { data: session, logout } = useMockSession();
+  const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -67,14 +74,14 @@ export function Header() {
   const navItems = isAdmin ? [...publicNavItems, ...adminNavItems] : publicNavItems;
 
   const handleSignOut = () => {
-    clearMockSession();
+    logout();
     router.push("/");
     router.refresh();
   };
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#1E293B] glass">
+      <header className="sticky top-0 z-50 border-b border-border glass">
         <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
@@ -82,22 +89,22 @@ export function Header() {
               <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
                 <ShoppingCart className="h-5 w-5 text-white" />
               </div>
-              <span className="font-sora text-xl font-bold text-white">
+              <span className="font-sora text-xl font-bold text-text-primary">
                 Shop<span className="gradient-text">Account</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navItems.slice(0, 6).map((item) => (
+            <nav className="hidden xl:flex items-center gap-1">
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "px-4 py-2 rounded-[12px] text-sm font-medium transition-all duration-200",
+                    "px-3 py-2 rounded-[12px] text-xs xl:text-sm font-medium transition-all duration-200",
                     pathname === item.href
-                      ? "bg-[#1F2937] text-white"
-                      : "text-[#94A3B8] hover:text-white hover:bg-[#1F2937]"
+                      ? "bg-bg-card-hover text-text-primary"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-card-hover"
                   )}
                 >
                   {item.label}
@@ -106,15 +113,27 @@ export function Header() {
             </nav>
 
             {/* Right Section */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 xl:gap-3">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-bg-card transition-all duration-200 hover:border-primary hover:bg-bg-card-hover"
+              >
+                {mounted && theme === "dark" ? (
+                  <Sun className="h-5 w-5 text-text-secondary" />
+                ) : (
+                  <Moon className="h-5 w-5 text-text-secondary" />
+                )}
+              </button>
+
               {/* Cart Button */}
               <button
                 onClick={openCart}
-                className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#1E293B] bg-[#111827] transition-all duration-200 hover:border-[#3B82F6] hover:bg-[#1F2937]"
+                className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-bg-card transition-all duration-200 hover:border-primary hover:bg-bg-card-hover"
               >
-                <ShoppingCart className="h-5 w-5 text-[#94A3B8]" />
+                <ShoppingCart className="h-5 w-5 text-text-secondary" />
                 {mounted && cartItemCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#3B82F6] text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                     {cartItemCount}
                   </span>
                 )}
@@ -125,7 +144,7 @@ export function Header() {
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 rounded-[12px] border border-[#1E293B] bg-[#111827] px-3 py-2 transition-all duration-200 hover:border-[#3B82F6]"
+                    className="flex items-center gap-2 rounded-[12px] border border-border bg-bg-card px-3 py-2 transition-all duration-200 hover:border-primary"
                   >
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
                       <span className="text-xs font-bold text-white">
@@ -133,13 +152,13 @@ export function Header() {
                       </span>
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-xs font-medium text-white">{session.user.name}</p>
-                      <p className="text-[10px] text-[#94A3B8]">
+                      <p className="text-xs font-medium text-text-primary">{session.user.name}</p>
+                      <p className="text-[10px] text-text-secondary">
                         {formatCurrency(session.user.balance)}
                       </p>
                     </div>
                     <ChevronDown className={cn(
-                      "h-4 w-4 text-[#64748B] transition-transform",
+                      "h-4 w-4 text-text-muted transition-transform",
                       isUserMenuOpen && "rotate-180"
                     )} />
                   </button>
@@ -150,16 +169,16 @@ export function Header() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-[#1E293B] bg-[#111827] shadow-xl"
+                        className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-border bg-bg-card shadow-xl"
                       >
-                        <div className="border-b border-[#1E293B] p-3">
-                          <p className="font-medium text-white">{session.user.name}</p>
-                          <p className="text-xs text-[#94A3B8]">{session.user.email}</p>
+                        <div className="border-b border-border p-3">
+                          <p className="font-medium text-text-primary">{session.user.name}</p>
+                          <p className="text-xs text-text-secondary">{session.user.email}</p>
                         </div>
                         <div className="p-1">
                           <Link
                             href="/cai-dat"
-                            className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-[#94A3B8] transition-colors hover:bg-[#1F2937] hover:text-white"
+                            className="flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-card-hover hover:text-text-primary"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
                             <Settings className="h-4 w-4" />
@@ -170,7 +189,7 @@ export function Header() {
                               setIsUserMenuOpen(false);
                               handleSignOut();
                             }}
-                            className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-[#EF4444] transition-colors hover:bg-[#1F2937]"
+                            className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-sm text-error transition-colors hover:bg-bg-card-hover"
                           >
                             <LogOut className="h-4 w-4" />
                             Đăng xuất
@@ -194,12 +213,12 @@ export function Header() {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex lg:hidden h-10 w-10 items-center justify-center rounded-[12px] border border-[#1E293B] bg-[#111827]"
+                className="flex xl:hidden h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-bg-card"
               >
                 {isMenuOpen ? (
-                  <X className="h-5 w-5 text-white" />
+                  <X className="h-5 w-5 text-text-primary" />
                 ) : (
-                  <Menu className="h-5 w-5 text-white" />
+                  <Menu className="h-5 w-5 text-text-primary" />
                 )}
               </button>
             </div>
@@ -213,7 +232,7 @@ export function Header() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden border-t border-[#1E293B] overflow-hidden"
+              className="xl:hidden border-t border-border overflow-hidden"
             >
               <nav className="p-4 space-y-1">
                 {navItems.map((item) => (
@@ -224,8 +243,8 @@ export function Header() {
                     className={cn(
                       "flex items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium transition-all",
                       pathname === item.href
-                        ? "bg-[#1F2937] text-white"
-                        : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                        ? "bg-bg-card-hover text-text-primary"
+                        : "text-text-secondary hover:bg-bg-card-hover hover:text-text-primary"
                     )}
                   >
                     <item.icon className="h-5 w-5" />

@@ -25,12 +25,14 @@ interface MockAuthContextType {
   data: MockSession | null;
   status: "authenticated" | "unauthenticated" | "loading";
   update: (data?: Partial<MockUser>) => void;
+  logout: () => void;
 }
 
 const MockAuthContext = createContext<MockAuthContextType>({
   data: null,
   status: "loading",
   update: () => {},
+  logout: () => {},
 });
 
 export function MockAuthProvider({ children }: { children: React.ReactNode }) {
@@ -78,8 +80,14 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const logout = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setData(null);
+    setStatus("unauthenticated");
+  };
+
   return (
-    <MockAuthContext.Provider value={{ data, status, update }}>
+    <MockAuthContext.Provider value={{ data, status, update, logout }}>
       {children}
     </MockAuthContext.Provider>
   );

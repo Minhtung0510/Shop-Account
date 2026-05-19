@@ -47,7 +47,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 bg-bg-primary">
       <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left - Branding */}
         <div className="hidden lg:flex flex-col justify-center pr-12">
@@ -62,15 +62,15 @@ export default function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
-              <span className="font-sora text-2xl font-bold text-white">
+              <span className="font-sora text-2xl font-bold text-text-primary">
                 Shop<span className="gradient-text">Account</span>
               </span>
             </Link>
-            <h1 className="font-sora text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            <h1 className="font-sora text-4xl lg:text-5xl font-bold text-text-primary mb-6 leading-tight">
               Chào mừng<br />
               <span className="gradient-text">trở lại!</span>
             </h1>
-            <p className="text-lg text-[#94A3B8] mb-8">
+            <p className="text-lg text-text-secondary mb-8">
               Đăng nhập để truy cập tài khoản của bạn, quản lý đơn hàng và nạp tiền.
             </p>
             <div className="space-y-4">
@@ -80,12 +80,12 @@ export default function LoginPage() {
                 "Hỗ trợ khách hàng tận tâm",
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#22C55E]/20">
-                    <svg className="h-3 w-3 text-[#22C55E]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/20">
+                    <svg className="h-3 w-3 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-[#94A3B8]">{text}</span>
+                  <span className="text-text-secondary">{text}</span>
                 </div>
               ))}
             </div>
@@ -100,21 +100,21 @@ export default function LoginPage() {
         >
           <Card className="!rounded-[18px]">
             <CardHeader className="space-y-1 p-6 lg:p-8 pb-0">
-              <CardTitle className="font-sora text-2xl font-bold text-white">
+              <CardTitle className="font-sora text-2xl font-bold text-text-primary">
                 Đăng nhập
               </CardTitle>
-              <CardDescription className="text-[#94A3B8]">
+              <CardDescription className="text-text-secondary">
                 Nhập thông tin đăng nhập của bạn
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 lg:p-8 space-y-4">
-              <div className="rounded-[12px] border border-[#3B82F6]/30 bg-[#3B82F6]/10 p-3 text-sm text-[#93C5FD] mb-2">
+              <div className="rounded-[12px] border border-primary/30 bg-primary/10 p-3 text-sm text-primary mb-2">
                 Demo mode (không cần database) — Dùng tài khoản bên dưới để đăng nhập
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {errors.form && (
-                  <div className="rounded-[12px] border border-[#EF4444]/30 bg-[#EF4444]/10 p-3 text-sm text-[#EF4444]">
+                  <div className="rounded-[12px] border border-error/30 bg-error/10 p-3 text-sm text-error">
                     {errors.form}
                   </div>
                 )}
@@ -146,10 +146,10 @@ export default function LoginPage() {
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="h-4 w-4 rounded border-[#334155] bg-[#111827] text-[#3B82F6] focus:ring-[#3B82F6]" />
-                    <span className="text-sm text-[#94A3B8]">Ghi nhớ đăng nhập</span>
+                    <input type="checkbox" className="h-4 w-4 rounded border-border bg-bg-primary text-primary focus:ring-primary" />
+                    <span className="text-sm text-text-secondary">Ghi nhớ đăng nhập</span>
                   </label>
-                  <Link href="/forgot-password" className="text-sm text-[#3B82F6] hover:underline">
+                  <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                     Quên mật khẩu?
                   </Link>
                 </div>
@@ -162,10 +162,10 @@ export default function LoginPage() {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#1E293B]" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-[#111827] px-2 text-[#64748B]">Hoặc đăng nhập với</span>
+                  <span className="bg-bg-card px-2 text-text-muted">Hoặc đăng nhập với</span>
                 </div>
               </div>
 
@@ -197,27 +197,27 @@ export default function LoginPage() {
                 </Button>
               </div>
 
-              <div className="rounded-[12px] border border-[#1E293B] bg-[#0F172A] p-3 text-xs text-[#64748B]">
-                <p className="font-medium text-white mb-2">Tài khoản demo:</p>
+              <div className="rounded-[12px] border border-border bg-bg-primary p-3 text-xs text-text-muted">
+                <p className="font-medium text-text-primary mb-2">Tài khoản demo:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {MOCK_USERS.map((u) => (
                     <button
                       key={u.id}
                       type="button"
                       onClick={() => setFormData({ email: u.email, password: u.password })}
-                      className="text-left p-2 rounded-[8px] bg-[#1E293B] hover:bg-[#334155] transition-colors"
+                      className="text-left p-2 rounded-[8px] bg-bg-card-hover border border-border hover:border-primary transition-all"
                     >
-                      <p className="text-white font-medium truncate">{u.name}</p>
-                      <p className="text-[#94A3B8] truncate">{u.email}</p>
-                      <p className="text-[#64748B]">({u.role})</p>
+                      <p className="text-text-primary font-medium truncate">{u.name}</p>
+                      <p className="text-text-secondary truncate">{u.email}</p>
+                      <p className="text-text-muted">({u.role})</p>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <p className="text-center text-sm text-[#94A3B8]">
+              <p className="text-center text-sm text-text-secondary">
                 Chưa có tài khoản?{" "}
-                <Link href="/register" className="text-[#3B82F6] hover:underline font-medium">
+                <Link href="/register" className="text-primary hover:underline font-medium">
                   Đăng ký ngay
                 </Link>
               </p>

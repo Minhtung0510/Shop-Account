@@ -84,7 +84,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 bg-bg-primary">
       <div className="w-full max-w-md">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -98,19 +98,19 @@ export default function RegisterPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
-              <span className="font-sora text-2xl font-bold text-white">
+              <span className="font-sora text-2xl font-bold text-text-primary">
                 Shop<span className="gradient-text">Account</span>
               </span>
             </Link>
-            <h1 className="font-sora text-2xl font-bold text-white mb-2">Tạo tài khoản mới</h1>
-            <p className="text-[#94A3B8]">Đăng ký để mua tài khoản và dịch vụ online</p>
+            <h1 className="font-sora text-2xl font-bold text-text-primary mb-2">Tạo tài khoản mới</h1>
+            <p className="text-text-secondary">Đăng ký để mua tài khoản và dịch vụ online</p>
           </div>
 
           <Card className="!rounded-[18px]">
             <CardContent className="p-6 lg:p-8 space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 {errors.form && (
-                  <div className="rounded-[12px] border border-[#EF4444]/30 bg-[#EF4444]/10 p-3 text-sm text-[#EF4444]">
+                  <div className="rounded-[12px] border border-error/30 bg-error/10 p-3 text-sm text-error">
                     {errors.form}
                   </div>
                 )}
@@ -176,12 +176,12 @@ export default function RegisterPage() {
                 />
 
                 <label className="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" required className="mt-1 h-4 w-4 rounded border-[#334155] bg-[#111827] text-[#3B82F6] focus:ring-[#3B82F6]" />
-                  <span className="text-sm text-[#94A3B8]">
+                  <input type="checkbox" required className="mt-1 h-4 w-4 rounded border-border bg-bg-primary text-primary focus:ring-primary" />
+                  <span className="text-sm text-text-secondary">
                     Tôi đồng ý với{" "}
-                    <Link href="/dieu-khoan" className="text-[#3B82F6] hover:underline">Điều khoản sử dụng</Link>
+                    <Link href="/dieu-khoan" className="text-primary hover:underline">Điều khoản sử dụng</Link>
                     {" "}và{" "}
-                    <Link href="/chinh-sach" className="text-[#3B82F6] hover:underline">Chính sách bảo mật</Link>
+                    <Link href="/chinh-sach" className="text-primary hover:underline">Chính sách bảo mật</Link>
                   </span>
                 </label>
 
@@ -191,9 +191,9 @@ export default function RegisterPage() {
                 </Button>
               </form>
 
-              <p className="text-center text-sm text-[#94A3B8]">
+              <p className="text-center text-sm text-text-secondary">
                 Đã có tài khoản?{" "}
-                <Link href="/login" className="text-[#3B82F6] hover:underline font-medium">
+                <Link href="/login" className="text-primary hover:underline font-medium">
                   Đăng nhập ngay
                 </Link>
               </p>

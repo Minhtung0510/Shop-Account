@@ -6,25 +6,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[14px] text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[14px] text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-[#3B82F6] text-white hover:bg-[#2563EB] shadow-[0_4px_14px_rgba(59,130,246,0.25)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.35)]",
+          "bg-primary text-white hover:bg-primary-hover shadow-button hover:shadow-lg",
         secondary:
-          "bg-[#06B6D4] text-white hover:bg-[#0891B2] shadow-[0_4px_14px_rgba(6,182,212,0.25)]",
+          "bg-secondary text-white hover:opacity-90 shadow-button",
         success:
-          "bg-[#22C55E] text-white hover:bg-[#16A34A] shadow-[0_4px_14px_rgba(34,197,94,0.25)]",
+          "bg-success text-white hover:opacity-90 shadow-button",
         warning:
-          "bg-[#F59E0B] text-white hover:bg-[#D97706] shadow-[0_4px_14px_rgba(245,158,11,0.25)]",
+          "bg-warning text-white hover:opacity-90 shadow-button",
         error:
-          "bg-[#EF4444] text-white hover:bg-[#DC2626] shadow-[0_4px_14px_rgba(239,68,68,0.25)]",
+          "bg-error text-white hover:opacity-90 shadow-button",
         outline:
-          "border border-[#334155] bg-transparent text-white hover:bg-[#1F2937] hover:border-[#475569]",
+          "border border-border bg-transparent text-text-primary hover:bg-bg-card-hover hover:border-border-hover",
         ghost:
-          "bg-transparent text-[#94A3B8] hover:bg-[#1F2937] hover:text-white",
-        link: "text-[#3B82F6] underline-offset-4 hover:underline",
+          "bg-transparent text-text-secondary hover:bg-bg-card-hover hover:text-text-primary",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2",

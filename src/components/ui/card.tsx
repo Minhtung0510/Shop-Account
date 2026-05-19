@@ -9,9 +9,9 @@ function Card({ className, hover, glow, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-[18px] border border-[#1E293B] bg-[#111827] shadow-[0_10px_30px_rgba(0,0,0,0.3)]",
-        hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]",
-        glow && "transition-all duration-300 hover:shadow-[0_0_30px_rgba(59,130,246,0.2)]",
+        "rounded-[18px] border border-border bg-bg-card shadow-card",
+        hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+        glow && "transition-all duration-300 hover:shadow-glow",
         className
       )}
       {...props}
@@ -31,7 +31,7 @@ function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement
 function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("font-sora text-lg font-bold leading-none tracking-tight text-white", className)}
+      className={cn("font-sora text-lg font-bold leading-none tracking-tight text-text-primary", className)}
       {...props}
     />
   );
@@ -40,7 +40,7 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm text-[#94A3B8]", className)}
+      className={cn("text-sm text-text-secondary", className)}
       {...props}
     />
   );
