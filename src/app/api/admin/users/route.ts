@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -41,6 +41,42 @@ export async function GET() {
     return NextResponse.json(formattedUsers);
   } catch (error) {
     console.error("Admin users API error:", error);
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { id, username, email, phone, role, balance, rank } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Thiếu ID" }, { status: 400 });
+    }
+
+    const existing = await db.user.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (username !== undefined) updateData.username = username;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone || null;
+    if (role !== undefined) updateData.role = role;
+    if (balance !== undefined) updateData.balance = balance;
+    if (rank !== undefined) updateData.rank = rank;
+
+    await db.user.update({ where: { id }, data: updateData });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Update user error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

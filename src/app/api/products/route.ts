@@ -40,7 +40,10 @@ export async function GET(request: Request) {
     const [products, total] = await Promise.all([
       db.product.findMany({
         where,
-        include: { category: true },
+        include: {
+          category: true,
+          _count: { select: { accountInventory: { where: { status: "AVAILABLE" } } } },
+        },
         orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -48,8 +51,13 @@ export async function GET(request: Request) {
       db.product.count({ where }),
     ]);
 
+    const synced = products.map((p) => ({
+      ...p,
+      stock: p._count.accountInventory,
+    }));
+
     return NextResponse.json({
-      items: products,
+      items: synced,
       total,
       page,
       pageSize,

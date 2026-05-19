@@ -19,8 +19,8 @@ import {
   Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useState } from "react";
 
 interface NavItem {
   href: string;
@@ -35,6 +35,7 @@ const adminSections: { title: string; items: NavItem[] }[] = [
     title: "QUẢN TRỊ",
     items: [
       { href: "/shop-account-adm-notuser", label: "Tổng quan", icon: LayoutDashboard },
+      { href: "/shop-account-adm-notuser/danh-muc", label: "Danh mục", icon: LayoutGrid },
       { href: "/shop-account-adm-notuser/nguoi-dung", label: "Người dùng", icon: Users },
       { href: "/shop-account-adm-notuser/san-pham", label: "Sản phẩm", icon: Package },
       { href: "/shop-account-adm-notuser/don-hang", label: "Đơn hàng", icon: ShoppingBag },
@@ -54,14 +55,7 @@ const adminSections: { title: string; items: NavItem[] }[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [session, setSession] = useState<{ name?: string; role?: string } | null>(null);
-
-  useEffect(() => {
-    fetch("/api/me")
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => { if (data) setSession(data); })
-      .catch(() => null);
-  }, []);
+  const { data: session } = useSession();
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/login" });
@@ -83,16 +77,16 @@ export function AdminSidebar() {
       </div>
 
       {/* User Profile */}
-      {session && (
+      {session?.user && (
         <div className="px-4 py-3 border-b border-[#1E293B]">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#6366F1] to-[#8B5CF6]">
               <span className="text-sm font-bold text-white">
-                {session.name?.[0]?.toUpperCase() || "A"}
+                {session.user.name?.[0]?.toUpperCase() || "A"}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-white">{session.name}</p>
+              <p className="truncate text-sm font-semibold text-white">{session.user.name}</p>
               <p className="text-xs text-[#6366F1]">Quản trị viên</p>
             </div>
           </div>

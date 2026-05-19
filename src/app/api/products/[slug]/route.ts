@@ -12,14 +12,17 @@ export async function GET(
 
     const product = await db.product.findUnique({
       where: { slug },
-      include: { category: true },
+      include: {
+        category: true,
+        _count: { select: { accountInventory: { where: { status: "AVAILABLE" } } } },
+      },
     });
 
     if (!product) {
-      return NextResponse.json({ error: "Không tìm thấy sản phẩm" }, { status: 404 });
+      return NextResponse.json({ error: "Khong tim thay san pham" }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json({ ...product, stock: product._count.accountInventory });
   } catch {
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }

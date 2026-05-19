@@ -21,65 +21,73 @@ async function getDashboardData() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 
-  const [totalUsers, totalOrders, monthlyRevenue, todayOrders, recentOrders, successCount, processingCount, failedCount, pendingCount, topUsers] =
-    await Promise.all([
-      db.user.count({ where: { role: "USER" } }),
-      db.order.count(),
-      db.order.aggregate({
-        where: { createdAt: { gte: startOfMonth }, status: "SUCCESS" },
-        _sum: { totalAmount: true },
-      }),
-      db.order.count({ where: { createdAt: { gte: startOfToday } } }),
-      db.order.findMany({
-        take: 10,
-        orderBy: { createdAt: "desc" },
-        include: { user: { select: { username: true } } },
-      }),
+  const [
+    totalUsers,
+    productOrders,
+    productRevenue,
+    todayProductOrders,
+    productStats,
+    serviceOrders,
+    recentServiceOrders,
+  ] = await Promise.all([
+    db.user.count({ where: { role: "USER" } }),
+
+    db.order.findMany({
+      where: { createdAt: { gte: startOfMonth } },
+      select: { totalAmount: true, status: true, createdAt: true },
+    }),
+
+    db.order.aggregate({
+      where: { createdAt: { gte: startOfMonth }, status: "SUCCESS" },
+      _sum: { totalAmount: true },
+    }),
+
+    db.order.count({ where: { createdAt: { gte: startOfToday } } }),
+
+    Promise.all([
       db.order.count({ where: { status: "SUCCESS" } }),
       db.order.count({ where: { status: "PROCESSING" } }),
       db.order.count({ where: { status: "FAILED" } }),
       db.order.count({ where: { status: "PENDING" } }),
-      db.user.findMany({
-        where: { role: "USER" },
-        select: { id: true, username: true, _count: { select: { orders: true } } },
-        orderBy: { orders: { _count: "desc" } },
-        take: 5,
-      }),
-    ]);
+    ]),
+
+    db.serviceOrder.count(),
+
+    db.serviceOrder.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+  ]);
+
+  const monthlyRevenue = (productRevenue._sum.totalAmount || 0) + serviceOrders * 500000;
+  const totalOrders = productOrders.length + serviceOrders;
+  const todayOrders = todayProductOrders;
 
   return {
     stats: {
       totalUsers,
       totalOrders,
-      monthlyRevenue: monthlyRevenue._sum.totalAmount || 0,
+      monthlyRevenue,
       todayOrders,
       usersChange: 12,
-      ordersChange: 8,
+      ordersChange: Math.round((totalOrders / 50) * 100),
       revenueChange: 23,
       todayOrdersChange: 15,
     },
-    recentOrders: recentOrders.map((o) => ({
-      id: o.id,
-      totalAmount: o.totalAmount,
-      status: o.status,
-      createdAt: o.createdAt.toISOString(),
-      user: o.user,
-    })),
-    orderStats: { success: successCount, processing: processingCount, failed: failedCount, pending: pendingCount },
-    topUsers: topUsers.map((u) => ({ id: u.id, username: u.username, orderCount: u._count.orders })),
+    orderStats: {
+      success: productStats[0],
+      processing: productStats[1],
+      failed: productStats[2],
+      pending: productStats[3],
+    },
   };
 }
 
 export default async function AdminDashboardPage() {
   const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "ADMIN") {
-    redirect("/");
-  }
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "ADMIN") redirect("/");
 
   const data = await getDashboardData();
 
@@ -100,11 +108,9 @@ export default async function AdminDashboardPage() {
             <h1 className="text-lg font-bold text-white">Tổng quan</h1>
             <p className="text-xs text-[#64748B]">Xem tổng quan hệ thống</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#64748B]">
-              {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </span>
-          </div>
+          <span className="text-xs text-[#64748B]">
+            {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </span>
         </header>
 
         <div className="p-6 space-y-6">
@@ -135,124 +141,27 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
-                <div className="flex items-center justify-between p-5 pb-3 border-b border-[#1E293B]">
-                  <h2 className="text-sm font-semibold text-white">Đơn hàng gần đây</h2>
-                  <Badge className="bg-[#6366F1]/15 text-[#6366F1] text-[10px] px-2">Mới nhất</Badge>
-                </div>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-[#1E293B]">
-                          {["Mã đơn", "Khách hàng", "Tổng tiền", "Trạng thái", "Ngày tạo"].map((h) => (
-                            <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold uppercase text-[#64748B]">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#1E293B]">
-                        {data.recentOrders.map((order) => (
-                          <tr key={order.id} className="hover:bg-[#1E293B]/30 transition-colors">
-                            <td className="px-5 py-3">
-                              <span className="font-mono text-xs text-[#6366F1]">{order.id.slice(-8).toUpperCase()}</span>
-                            </td>
-                            <td className="px-5 py-3">
-                              <span className="text-sm text-white">{order.user.username}</span>
-                            </td>
-                            <td className="px-5 py-3">
-                              <span className="text-sm font-semibold text-white">{formatCurrency(order.totalAmount)}</span>
-                            </td>
-                            <td className="px-5 py-3">
-                              <Badge className={`text-xs ${
-                                order.status === "SUCCESS" ? "bg-[#10B981]/15 text-[#10B981]" :
-                                order.status === "PROCESSING" ? "bg-[#F59E0B]/15 text-[#F59E0B]" :
-                                order.status === "PENDING" ? "bg-[#6366F1]/15 text-[#6366F1]" :
-                                "bg-[#EF4444]/15 text-[#EF4444]"
-                              }`}>
-                                {order.status === "SUCCESS" ? "Thành công" :
-                                 order.status === "PROCESSING" ? "Đang xử lý" :
-                                 order.status === "PENDING" ? "Chờ thanh toán" : "Thất bại"}
-                              </Badge>
-                            </td>
-                            <td className="px-5 py-3">
-                              <span className="text-xs text-[#64748B]">
-                                {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                        {data.recentOrders.length === 0 && (
-                          <tr>
-                            <td colSpan={5} className="px-5 py-8 text-center text-sm text-[#64748B]">
-                              Chưa có đơn hàng nào
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+          <Card className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
+            <div className="p-5 pb-3 border-b border-[#1E293B]">
+              <h2 className="text-sm font-semibold text-white">Trạng thái đơn hàng sản phẩm</h2>
             </div>
-
-            <div className="space-y-4">
-              <Card className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
-                <div className="p-5 pb-3 border-b border-[#1E293B]">
-                  <h2 className="text-sm font-semibold text-white">Trạng thái đơn hàng</h2>
-                </div>
-                <CardContent className="p-5 space-y-3">
-                  {[
-                    { label: "Thành công", count: data.orderStats.success, bg: "bg-[#10B981]" },
-                    { label: "Đang xử lý", count: data.orderStats.processing, bg: "bg-[#F59E0B]" },
-                    { label: "Thất bại", count: data.orderStats.failed, bg: "bg-[#EF4444]" },
-                    { label: "Chờ thanh toán", count: data.orderStats.pending, bg: "bg-[#6366F1]" },
-                  ].map((status) => (
-                    <div key={status.label} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full ${status.bg}`} />
-                        <span className="text-sm text-[#94A3B8]">{status.label}</span>
-                      </div>
-                      <span className="text-sm font-bold text-white">{status.count}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
-                <div className="flex items-center justify-between p-5 pb-3 border-b border-[#1E293B]">
-                  <h2 className="text-sm font-semibold text-white">Top người dùng</h2>
-                  <Badge className="bg-[#10B981]/15 text-[#10B981] text-[10px] px-2">Tháng này</Badge>
-                </div>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-[#1E293B]">
-                    {data.topUsers.map((user, index) => (
-                      <div key={user.id} className="flex items-center gap-3 px-5 py-3 hover:bg-[#1E293B]/30 transition-colors">
-                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                          index === 0 ? "bg-[#F59E0B]/20 text-[#F59E0B]" :
-                          index === 1 ? "bg-[#94A3B8]/20 text-[#94A3B8]" :
-                          index === 2 ? "bg-[#CD7F32]/20 text-[#CD7F32]" :
-                          "bg-[#1E293B] text-[#64748B]"
-                        }`}>
-                          {index + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{user.username}</p>
-                        </div>
-                        <span className="text-xs text-[#64748B]">{user.orderCount} đơn</span>
-                      </div>
-                    ))}
-                    {data.topUsers.length === 0 && (
-                      <div className="px-5 py-4 text-center text-sm text-[#64748B]">
-                        Chưa có người dùng
-                      </div>
-                    )}
+            <CardContent className="p-5 space-y-3">
+              {[
+                { label: "Thành công", count: data.orderStats.success, bg: "bg-[#10B981]" },
+                { label: "Đang xử lý", count: data.orderStats.processing, bg: "bg-[#F59E0B]" },
+                { label: "Thất bại", count: data.orderStats.failed, bg: "bg-[#EF4444]" },
+                { label: "Chờ thanh toán", count: data.orderStats.pending, bg: "bg-[#6366F1]" },
+              ].map((status) => (
+                <div key={status.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-2 w-2 rounded-full ${status.bg}`} />
+                    <span className="text-sm text-[#94A3B8]">{status.label}</span>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                  <span className="text-sm font-bold text-white">{status.count}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

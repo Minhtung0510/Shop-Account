@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
 import { useUserStore } from "@/store";
+import { useRouter } from "next/navigation";
 import {
   QrCode,
   Copy,
@@ -16,6 +17,7 @@ import {
   Wallet,
   AlertCircle,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -33,21 +35,21 @@ const quickAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 export default function TopupPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [selectedBank, setSelectedBank] = useState("VCB");
   const [amount, setAmount] = useState(100000);
   const [qrGenerated, setQrGenerated] = useState(false);
   const [copied, setCopied] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [transferContent, setTransferContent] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const userFromStore = useUserStore((s) => s.user);
-
-  const uid = session?.user?.id?.slice(-6).toUpperCase() || "ABC123";
-  const transferContent = `UID_${uid}`;
 
   const bank = banks.find((b) => b.code === selectedBank);
 
@@ -58,14 +60,40 @@ export default function TopupPage() {
     }
   }, [countdown]);
 
-  const generateQR = () => {
+  const generateQR = async () => {
+    if (!session?.user) {
+      toast.error("Vui lòng đăng nhập để nạp tiền");
+      router.push("/login");
+      return;
+    }
     if (amount < 10000) {
       toast.error("Số tiền nạp tối thiểu là 10,000đ");
       return;
     }
-    setQrGenerated(true);
-    setCountdown(600);
-    toast.success("Đã tạo mã QR. Vui lòng thanh toán trong 10 phút!");
+
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/topup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, bankCode: selectedBank }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Lỗi khi tạo yêu cầu nạp tiền");
+        return;
+      }
+
+      setTransferContent(data.transferContent);
+      setQrGenerated(true);
+      setCountdown(600);
+      toast.success(`Đã tạo mã QR. Nội dung: ${data.transferContent}`);
+    } catch {
+      toast.error("Lỗi kết nối. Vui lòng thử lại.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const copyTransferContent = () => {
@@ -78,6 +106,7 @@ export default function TopupPage() {
   const refreshQR = () => {
     setQrGenerated(false);
     setCountdown(0);
+    setTransferContent("");
   };
 
   return (
@@ -169,9 +198,9 @@ export default function TopupPage() {
                   </div>
                 </div>
 
-                <Button onClick={generateQR} size="lg" className="w-full">
-                  <QrCode className="h-4 w-4" />
-                  Tạo mã QR
+                <Button onClick={generateQR} size="lg" className="w-full" disabled={generating}>
+                  {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                  {generating ? "Dang tao ma QR..." : "Tao ma QR"}
                 </Button>
               </CardContent>
             </Card>

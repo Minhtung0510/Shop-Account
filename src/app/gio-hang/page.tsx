@@ -87,7 +87,7 @@ export default function CartPage() {
       toast.success("Thanh toán thành công!", {
         description: `Đã thanh toán ${formatCurrency(data.totalAmount)}. Tài khoản đang được gửi...`,
       });
-      router.push("/thanh-toan-thanh-cong");
+      router.push(`/thanh-toan-thanh-cong?orderId=${data.orderId}`);
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

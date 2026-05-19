@@ -17,7 +17,10 @@ export async function GET(request: Request) {
     const [products, categories, services] = await Promise.all([
       db.product.findMany({
         where,
-        include: { category: true },
+        include: {
+          category: true,
+          _count: { select: { accountInventory: { where: { status: "AVAILABLE" } } } },
+        },
         orderBy: { sold: "desc" },
         take: limit,
       }),
@@ -31,7 +34,9 @@ export async function GET(request: Request) {
       }),
     ]);
 
-    return NextResponse.json({ products, categories, services });
+    const synced = products.map((p) => ({ ...p, stock: p._count.accountInventory }));
+
+    return NextResponse.json({ products: synced, categories, services });
   } catch (error) {
     console.error("Products API error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });

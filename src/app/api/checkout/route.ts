@@ -13,7 +13,7 @@ function fmt(amount: number): string {
   }).format(amount);
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmailFn(to: string, subject: string, html: string) {
   if (!to || !subject || !html) return;
 
   const resendKey = process.env.RESEND_API_KEY;
@@ -102,7 +102,16 @@ export async function POST(request: Request) {
     }
 
     const productIds = items.map((item: { productId: string }) => item.productId);
-    const products = await db.product.findMany({ where: { id: { in: productIds } } });
+    const products = await db.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stock: true,
+        _count: { select: { accountInventory: { where: { status: "AVAILABLE" } } } },
+      },
+    });
 
     if (products.length !== productIds.length) {
       return NextResponse.json({ error: "Một số sản phẩm không tồn tại" }, { status: 400 });
@@ -112,13 +121,14 @@ export async function POST(request: Request) {
     const orderItemsData: { productId: string; quantity: number; price: number }[] = [];
 
     for (const item of items as { productId: string; quantity?: number }[]) {
-      const product = products.find((p: { id: string }) => p.id === item.productId)!;
+      const product = products.find((p) => p.id === item.productId)!;
       const quantity = item.quantity || 1;
+      const availableStock = product._count.accountInventory;
       totalAmount += product.price * quantity;
 
-      if (quantity > product.stock) {
+      if (quantity > availableStock) {
         return NextResponse.json(
-          { error: `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho` },
+          { error: `Sản phẩm "${product.name}" chỉ còn ${availableStock} trong kho` },
           { status: 400 }
         );
       }
@@ -133,8 +143,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const order = await db.$transaction(async (tx: any) => {
+    const allAccountData: Map<string, Array<{ email: string; password: string }>> = new Map();
+
+    const order = await db.$transaction(async (tx) => {
       const newOrder = await tx.order.create({
         data: {
           userId: session.user.id,
@@ -150,28 +161,56 @@ export async function POST(request: Request) {
         data: { balance: { decrement: totalAmount } },
       });
 
-      await Promise.all(
-        orderItemsData.map((item) =>
-          tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { decrement: item.quantity },
-              sold: { increment: item.quantity },
-            },
-          })
-        )
-      );
+      for (const item of orderItemsData) {
+        const availableAccounts = await tx.accountInventory.findMany({
+          where: { productId: item.productId, status: "AVAILABLE" },
+          take: item.quantity,
+          orderBy: { createdAt: "asc" },
+        });
+
+        if (availableAccounts.length > 0) {
+          const accountData = availableAccounts.map((acc) => ({
+            email: acc.email,
+            password: acc.password,
+          }));
+
+          allAccountData.set(item.productId, accountData);
+
+          await tx.orderItem.updateMany({
+            where: { orderId: newOrder.id, productId: item.productId },
+            data: { accountData: JSON.stringify(accountData) },
+          });
+
+          await tx.accountInventory.deleteMany({
+            where: { id: { in: availableAccounts.map((a) => a.id) } },
+          });
+        }
+
+        const remainingStock = await tx.accountInventory.count({
+          where: { productId: item.productId, status: "AVAILABLE" },
+        });
+
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: remainingStock,
+            sold: { increment: item.quantity },
+          },
+        });
+      }
 
       return newOrder;
-    });
+    }, { timeout: 30000 });
 
     const newBalance = user.balance - totalAmount;
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
+    await sendPurchaseEmail(user, products, orderItemsData, order.id, allAccountData);
+
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
     if (ADMIN_EMAIL) {
       const orderItemsHtml = orderItemsData
         .map((item) => {
-          const product = products.find((p: { id: string; name: string }) => p.id === item.productId)!;
+          const product = products.find((p) => p.id === item.productId)!;
           return `
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #eee;">${product.name}</td>
@@ -182,7 +221,7 @@ export async function POST(request: Request) {
         })
         .join("");
 
-      sendEmail(
+      sendEmailFn(
         ADMIN_EMAIL,
         `[Don Hang] ${user.username} - ${fmt(totalAmount)}`,
         `
@@ -227,4 +266,84 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "Lỗi server";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function sendPurchaseEmail(
+  user: { email: string; username: string },
+  products: Array<{ id: string; name: string; price: number }>,
+  orderItemsData: Array<{ productId: string; quantity: number; price: number }>,
+  orderId: string,
+  allAccountData: Map<string, Array<{ email: string; password: string }>>
+) {
+  const accountsHtml = orderItemsData
+    .map((item) => {
+      const product = products.find((p) => p.id === item.productId)!;
+      const accounts = allAccountData.get(item.productId) || [];
+      if (accounts.length === 0) return "";
+
+      const rows = accounts
+        .map(
+          (acc, i) => `
+          <p style="margin: 0 0 4px; font-size: 13px; color: #333;"><strong>Email:</strong> ${acc.email}</p>
+          <p style="margin: 0 0 16px; font-size: 13px; color: #333;"><strong>Mat khau:</strong> ${acc.password}</p>
+        `
+        )
+        .join("");
+
+      return `
+        <p style="margin: 0 0 4px; font-size: 14px; font-weight: bold; color: #111;">${product.name} (x${item.quantity})</p>
+        ${rows}
+      `;
+    })
+    .join("");
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; color: #111; font-size: 15px; line-height: 1.6;">
+      <h1 style="font-size: 22px; font-weight: 600; margin: 0 0 24px; color: #111;">Thanh toan thanh cong</h1>
+
+      <p style="margin: 0 0 20px; color: #555;">Cam on ban da mua hang. Chi tiet don hang:</p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Ma don</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: 500;">${orderId.slice(-8).toUpperCase()}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Khach hang</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">${user.username}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Thoi gian</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: 600; color: #111;">Tong tien</td>
+          <td style="padding: 8px 0; text-align: right; font-weight: 600;">${fmt(orderItemsData.reduce((sum, i) => sum + i.price * i.quantity, 0))}</td>
+        </tr>
+      </table>
+
+      ${
+        accountsHtml
+          ? `
+      <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px; color: #111;">Tai khoan cua ban</h2>
+      <p style="margin: 0 0 16px; font-size: 13px; color: #666;">Doi mat khau ngay sau khi dang nhap de bao mat tai khoan.</p>
+      <div style="border: 1px solid #ddd; padding: 16px; margin-bottom: 24px;">
+        ${accountsHtml}
+      </div>
+      `
+          : `
+      <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #111;">Tai khoan dang xu ly</p>
+      <p style="margin: 0 0 24px; font-size: 13px; color: #666;">Tai khoan se duoc gui qua email trong 24 gio.</p>
+      `
+      }
+
+      <p style="margin: 0; font-size: 12px; color: #999;">Tu dong gui tu Shop Account</p>
+    </div>
+  `;
+
+  await sendEmailFn(
+    user.email,
+    `Thanh toan thanh cong - Don ${orderId.slice(-8).toUpperCase()}`,
+    html
+  );
 }
