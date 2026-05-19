@@ -3,25 +3,23 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   try {
-    const { searchParams } = new URL(request.url);
-    const slug = searchParams.get("slug");
+    const { slug } = await params;
 
-    if (slug) {
-      const product = await db.product.findUnique({
-        where: { slug },
-        include: { category: true },
-      });
+    const product = await db.product.findUnique({
+      where: { slug },
+      include: { category: true },
+    });
 
-      if (!product) {
-        return NextResponse.json({ error: "Không tìm thấy sản phẩm" }, { status: 404 });
-      }
-
-      return NextResponse.json(product);
+    if (!product) {
+      return NextResponse.json({ error: "Không tìm thấy sản phẩm" }, { status: 404 });
     }
 
-    return NextResponse.json({ error: "Thiếu slug" }, { status: 400 });
+    return NextResponse.json(product);
   } catch {
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }

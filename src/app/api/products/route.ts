@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const where: Record<string, unknown> = {};
 
     if (search) {
-      where.name = { contains: search, mode: "insensitive" };
+      where.name = { contains: search };
     }
 
     if (category) {

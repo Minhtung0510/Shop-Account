@@ -87,3 +87,41 @@ export const useUIStore = create<UIStore>()((set) => ({
     set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
   closeMobileMenu: () => set({ isMobileMenuOpen: false }),
 }));
+
+export interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  balance: number;
+  rank: string;
+  role: string;
+}
+
+interface UserStore {
+  user: UserInfo | null;
+  setUser: (user: UserInfo | null) => void;
+  updateBalance: (newBalance: number) => void;
+  fetchUser: () => Promise<void>;
+}
+
+export const useUserStore = create<UserStore>((set, get) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  updateBalance: (newBalance) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, balance: newBalance } : null,
+    })),
+  fetchUser: async () => {
+    try {
+      const res = await fetch("/api/me");
+      if (res.ok) {
+        const data = await res.json();
+        set({ user: data });
+      } else {
+        set({ user: null });
+      }
+    } catch {
+      set({ user: null });
+    }
+  },
+}));

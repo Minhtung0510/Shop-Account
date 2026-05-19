@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
-import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
@@ -11,18 +11,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   providers: [
     Google({
-      clientId: env.AUTH_GOOGLE_ID,
-      clientSecret: env.AUTH_GOOGLE_SECRET,
+      clientId: env.AUTH_GOOGLE_ID ?? "",
+      clientSecret: env.AUTH_GOOGLE_SECRET ?? "",
     }),
     Facebook({
-      clientId: env.AUTH_FACEBOOK_ID,
-      clientSecret: env.AUTH_FACEBOOK_SECRET,
+      clientId: env.AUTH_FACEBOOK_ID ?? "",
+      clientSecret: env.AUTH_FACEBOOK_SECRET ?? "",
     }),
     Credentials({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        password: { label: "Mật khẩu", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -66,8 +66,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+      }
+
+      if (token.id) {
         const dbUser = await db.user.findUnique({
-          where: { email: user.email! },
+          where: { id: token.id as string },
           select: { role: true, balance: true, rank: true },
         });
         if (dbUser) {

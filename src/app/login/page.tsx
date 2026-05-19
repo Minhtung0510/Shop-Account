@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -8,7 +9,6 @@ import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MOCK_USERS, findMockUser } from "@/lib/mock-users";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,15 +26,20 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      const user = findMockUser(formData.email, formData.password);
-      if (!user) {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
         setErrors({ form: "Email hoặc mật khẩu không đúng" });
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("shopaccount_session", JSON.stringify(user));
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } catch {
       setErrors({ form: "Đã xảy ra lỗi. Vui lòng thử lại." });
     } finally {
@@ -42,8 +47,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleOAuth = () => {
-    setErrors({ form: "Đăng nhập OAuth đang tạm khóa (chưa có database)" });
+  const handleOAuth = (provider: "google" | "facebook") => {
+    signIn(provider, { callbackUrl: "/" });
   };
 
   return (
@@ -108,10 +113,6 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 lg:p-8 space-y-4">
-              <div className="rounded-[12px] border border-[#3B82F6]/30 bg-[#3B82F6]/10 p-3 text-sm text-[#93C5FD] mb-2">
-                Demo mode (không cần database) — Dùng tài khoản bên dưới để đăng nhập
-              </div>
-
               <form onSubmit={handleSubmit} className="space-y-4">
                 {errors.form && (
                   <div className="rounded-[12px] border border-[#EF4444]/30 bg-[#EF4444]/10 p-3 text-sm text-[#EF4444]">
@@ -173,7 +174,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleOAuth}
+                  onClick={() => handleOAuth("google")}
                   className="w-full"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -187,7 +188,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleOAuth}
+                  onClick={() => handleOAuth("facebook")}
                   className="w-full"
                 >
                   <svg className="h-4 w-4" fill="#1877F2" viewBox="0 0 24 24">
@@ -195,24 +196,6 @@ export default function LoginPage() {
                   </svg>
                   Facebook
                 </Button>
-              </div>
-
-              <div className="rounded-[12px] border border-[#1E293B] bg-[#0F172A] p-3 text-xs text-[#64748B]">
-                <p className="font-medium text-white mb-2">Tài khoản demo:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {MOCK_USERS.map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => setFormData({ email: u.email, password: u.password })}
-                      className="text-left p-2 rounded-[8px] bg-[#1E293B] hover:bg-[#334155] transition-colors"
-                    >
-                      <p className="text-white font-medium truncate">{u.name}</p>
-                      <p className="text-[#94A3B8] truncate">{u.email}</p>
-                      <p className="text-[#64748B]">({u.role})</p>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <p className="text-center text-sm text-[#94A3B8]">

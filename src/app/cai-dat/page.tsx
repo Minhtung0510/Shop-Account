@@ -1,6 +1,7 @@
 "use client";
 
-import { useMockSession } from "@/lib/mock-auth";
+import { useSession } from "@/hooks/useSession";
+import { useUserStore } from "@/store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -8,8 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import {
   User,
   Mail,
@@ -25,39 +25,42 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const stats = [
-  { label: "Số dư", value: "2,500,000đ", icon: Wallet, color: "text-[#3B82F6]" },
-  { label: "Tổng đơn hàng", value: "24", icon: ShoppingBag, color: "text-[#22C55E]" },
-  { label: "Tổng nạp tiền", value: "5,000,000đ", icon: CreditCard, color: "text-[#F59E0B]" },
-  { label: "Mua gần nhất", value: "2 giờ trước", icon: Calendar, color: "text-[#06B6D4]" },
+  { label: "Số dư", value: "0đ", icon: Wallet, color: "text-[#3B82F6]" },
+  { label: "Tổng đơn hàng", value: "0", icon: ShoppingBag, color: "text-[#22C55E]" },
+  { label: "Tổng nạp tiền", value: "0đ", icon: CreditCard, color: "text-[#F59E0B]" },
+  { label: "Mua gần nhất", value: "Chưa có", icon: Calendar, color: "text-[#06B6D4]" },
 ];
 
 export default function ProfilePage() {
-  const { data: session } = useMockSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const userFromStore = useUserStore((s) => s.user);
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || !session) {
+  if (status === "loading") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center py-12">
-        <div className="text-center">
-          <User className="h-16 w-16 text-[#334155] mx-auto mb-4" />
-          <h2 className="font-sora text-xl font-bold text-white mb-2">Cần đăng nhập</h2>
-          <p className="text-[#94A3B8] mb-6">Vui lòng đăng nhập để xem thông tin tài khoản</p>
-          <Button onClick={() => router.push("/login")}>Đăng nhập</Button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-[#3B82F6] border-t-transparent rounded-full" />
       </div>
     );
   }
+
+  if (!session) {
+    router.push("/login");
+    return null;
+  }
+
+  const userStats = [
+    { label: "Số dư", value: formatCurrency(userFromStore?.balance ?? session.user.balance), icon: Wallet, color: "text-[#3B82F6]" },
+    { label: "Tổng đơn hàng", value: "0", icon: ShoppingBag, color: "text-[#22C55E]" },
+    { label: "Tổng nạp tiền", value: "0đ", icon: CreditCard, color: "text-[#F59E0B]" },
+    { label: "Mua gần nhất", value: "Chưa có", icon: Calendar, color: "text-[#06B6D4]" },
+  ];
 
   const handleSave = async () => {
     setLoading(true);
@@ -85,7 +88,7 @@ export default function ProfilePage() {
                     <span className="text-3xl font-bold text-white">{session.user.name?.[0]?.toUpperCase()}</span>
                   </div>
                   <Badge className="absolute -bottom-1 -right-1 bg-[#F59E0B] text-white border-0">
-                    {session.user.rank}
+                    {session.user.rank || "Member"}
                   </Badge>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
@@ -107,7 +110,7 @@ export default function ProfilePage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {stats.map((stat) => (
+              {userStats.map((stat) => (
                 <Card key={stat.label} className="!rounded-[16px]">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -162,13 +165,13 @@ export default function ProfilePage() {
                     <label className="text-xs text-[#64748B] flex items-center gap-1">
                       <Phone className="h-3 w-3" /> Số điện thoại
                     </label>
-                    <p className="text-white font-medium">0987654321</p>
+                    <p className="text-white font-medium">Chưa cập nhật</p>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-[#64748B] flex items-center gap-1">
                       <Calendar className="h-3 w-3" /> Ngày tạo
                     </label>
-                    <p className="text-white font-medium">15/01/2026</p>
+                    <p className="text-white font-medium">-</p>
                   </div>
                 </div>
 
@@ -177,8 +180,12 @@ export default function ProfilePage() {
                     <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
                       Hủy
                     </Button>
-                    <Button size="sm" loading={loading} onClick={handleSave}>
-                      <Check className="h-3 w-3" />
+                    <Button size="sm" onClick={handleSave}>
+                      {loading ? (
+                        <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
+                      ) : (
+                        <Check className="h-3 w-3" />
+                      )}
                       Lưu
                     </Button>
                   </div>

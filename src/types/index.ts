@@ -93,6 +93,7 @@ export interface Service {
   description: string;
   price: number;
   category: string;
+  platform: "facebook" | "instagram" | "tiktok" | "interaction";
   createdAt: Date;
 }
 

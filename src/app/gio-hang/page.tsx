@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCartStore } from "@/store";
+import { useCartStore, useUserStore } from "@/store";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -20,11 +20,11 @@ import {
   Shield,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useMockSession } from "@/lib/mock-auth";
+import { useSession } from "@/hooks/useSession";
 
 export default function CartPage() {
   const router = useRouter();
-  const { data: session } = useMockSession();
+  const { data: session } = useSession();
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -37,6 +37,9 @@ export default function CartPage() {
     setMounted(true);
   }, []);
 
+  const fetchUser = useUserStore((s) => s.fetchUser);
+  const userFromStore = useUserStore((s) => s.user);
+
   const handleCheckout = async () => {
     if (!session) {
       toast.error("Vui lòng đăng nhập để thanh toán");
@@ -44,18 +47,52 @@ export default function CartPage() {
       return;
     }
 
-    if (session.user.balance < total) {
+    if ((userFromStore?.balance ?? session.user.balance) < total) {
       toast.error("Số dư không đủ. Vui lòng nạp thêm tiền!");
       router.push("/nap-tien");
       return;
     }
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    clearCart();
-    toast.success("Thanh toán thành công! Tài khoản đang được gửi...");
-    router.push("/thanh-toan-thanh-cong");
-    setLoading(false);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast.error("Vui lòng đăng nhập để thanh toán");
+          router.push("/login");
+          return;
+        }
+        if (res.status === 402) {
+          toast.error("Số dư không đủ. Vui lòng nạp thêm tiền!");
+          router.push("/nap-tien");
+          return;
+        }
+        throw new Error(data.error || "Thanh toán thất bại");
+      }
+
+      clearCart();
+      await fetchUser();
+      toast.success("Thanh toán thành công!", {
+        description: `Đã thanh toán ${formatCurrency(data.totalAmount)}. Tài khoản đang được gửi...`,
+      });
+      router.push("/thanh-toan-thanh-cong");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!mounted) {
@@ -194,7 +231,7 @@ export default function CartPage() {
                     <div className="flex justify-between">
                       <span className="text-[#94A3B8]">Số dư hiện có</span>
                       <span className={session.user.balance >= total ? "text-[#22C55E]" : "text-[#EF4444]"}>
-                        {formatCurrency(session.user.balance)}
+                        {formatCurrency(userFromStore?.balance ?? session.user.balance)}
                       </span>
                     </div>
                   )}
@@ -204,9 +241,9 @@ export default function CartPage() {
                     <span className="font-sora text-xl font-bold text-white">{formatCurrency(total)}</span>
                   </div>
 
-                  {session && session.user.balance < total && (
+                  {session && (userFromStore?.balance ?? session.user.balance) < total && (
                     <div className="rounded-[12px] border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-3 text-sm text-[#F59E0B]">
-                      Số dư không đủ. Cần nạp thêm {formatCurrency(total - session.user.balance)}
+                      Số dư không đủ. Cần nạp thêm {formatCurrency(total - (userFromStore?.balance ?? session.user.balance))}
                     </div>
                   )}
 

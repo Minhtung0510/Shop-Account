@@ -1,42 +1,32 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
-const SESSION_COOKIE = "shopaccount_session";
-const DEMO_MODE_COOKIE = "shopaccount_demo";
+export async function middleware(req: NextRequest) {
+  const session = await auth();
+  const { pathname } = req.nextUrl;
 
-export async function middleware(request: Request) {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(SESSION_COOKIE);
-  const { pathname } = new URL(request.url);
-
-  // Mock session from cookie (demo mode)
-  let sessionUser: { role: string } | null = null;
-  if (sessionCookie?.value) {
-    try {
-      sessionUser = JSON.parse(sessionCookie.value);
-    } catch {
-      // invalid cookie
+  if (pathname.startsWith("/shop-account-adm-notuser")) {
+    if (!session?.user) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
-  // Protect admin routes
-  if (pathname.startsWith("/admin")) {
-    if (!sessionUser) {
-      return NextResponse.redirect(new URL("/login", request.url));
+  if ((pathname === "/login" || pathname === "/register") && session?.user) {
+    if (session.user.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/shop-account-adm-notuser", req.url));
     }
-    if (sessionUser.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  }
-
-  // Redirect authenticated users away from auth pages
-  if ((pathname === "/login" || pathname === "/register") && sessionUser) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/register"],
+  matcher: ["/shop-account-adm-notuser/:path*", "/login", "/register"],
 };

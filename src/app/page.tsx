@@ -1,14 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { mockProducts, mockCategories, mockServices } from "@/lib/mock-data";
-import { useMockSession } from "@/lib/mock-auth";
+import { useSession } from "@/hooks/useSession";
 import {
   Zap,
   Shield,
@@ -21,8 +20,12 @@ import {
   Users,
   CreditCard,
   RefreshCw,
+  LogIn,
+  Wallet,
 } from "lucide-react";
 import { Header } from "@/components/shared/header";
+import { OrderFormModal } from "@/components/order-form-modal";
+import { useUserStore } from "@/store";
 
 const features = [
   {
@@ -49,12 +52,77 @@ const features = [
 
 export default function HomePage() {
   const router = useRouter();
-  const { data: session } = useMockSession();
+  const { data: session } = useSession();
+  const [products, setProducts] = useState<Array<{
+    id: string; name: string; slug: string; price: number;
+    originalPrice?: number; thumbnail: string; badge?: string;
+    sold: number; rating: number; stock: number; category: { name: string };
+  }>>([]);
+  const [categories, setCategories] = useState<Array<{
+    id: string; name: string; slug: string; icon: string; productCount: number;
+  }>>([]);
+  const [fbServices, setFbServices] = useState<Array<{
+    id: string; name: string; slug: string; icon: string; price: number; description: string;
+  }>>([]);
+  const [igServices, setIgServices] = useState<Array<{
+    id: string; name: string; slug: string; icon: string; price: number; description: string;
+  }>>([]);
+  const [ttServices, setTtServices] = useState<Array<{
+    id: string; name: string; slug: string; icon: string; price: number; description: string;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<{
+    id: string; name: string; slug: string; icon: string; price: number; description: string;
+  } | null>(null);
+
+  const userFromStore = useUserStore((s) => s.user);
+  const fetchUser = useUserStore((s) => s.fetchUser);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchUser();
+    }
+  }, [session]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/home/products").then((res) => res.json()),
+      fetch("/api/services?platform=Facebook").then((res) => res.json()),
+      fetch("/api/services?platform=Instagram").then((res) => res.json()),
+      fetch("/api/services?platform=TikTok").then((res) => res.json()),
+    ]).then(([homeData, fb, ig, tt]) => {
+      if (homeData.products) setProducts(homeData.products);
+      if (homeData.categories) setCategories(homeData.categories);
+      if (Array.isArray(fb)) setFbServices(fb);
+      if (Array.isArray(ig)) setIgServices(ig);
+      if (Array.isArray(tt)) setTtServices(tt);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
 
   const handleProductClick = (e: React.MouseEvent, slug: string) => {
     if (!session) {
       e.preventDefault();
       router.push("/login");
+    }
+  };
+
+  const getBadgeVariant = (badge: string) => {
+    switch (badge) {
+      case "BEST_SELLER": return "orange";
+      case "HOT": return "error";
+      case "NEW": return "purple";
+      case "PREMIUM": return "purple";
+      default: return "default";
+    }
+  };
+
+  const getBadgeLabel = (badge: string) => {
+    switch (badge) {
+      case "BEST_SELLER": return "🔥 Best";
+      case "HOT": return "🔥 Hot";
+      case "NEW": return "✨ Mới";
+      case "PREMIUM": return "⭐ VIP";
+      default: return "";
     }
   };
 
@@ -188,8 +256,8 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-            {mockProducts.slice(0, 8).map((product) => (
-              <Link key={product.id} href={`/tai-khoan/${product.slug}`} onClick={(e) => handleProductClick(e, product.slug ?? "")}>
+            {(loading ? [] : products).slice(0, 10).map((product) => (
+              <Link key={product.id} href={`/tai-khoan/${product.slug}`} onClick={(e) => handleProductClick(e, product.slug)}>
                 <Card hover glow className="group cursor-pointer overflow-hidden">
                   <div className="relative">
                     <div className="aspect-square overflow-hidden rounded-t-[18px] bg-[#1F2937]">
@@ -201,20 +269,10 @@ export default function HomePage() {
                     </div>
                     {product.badge && (
                       <Badge
-                        variant={
-                          product.badge === "BEST_SELLER"
-                            ? "orange"
-                            : product.badge === "HOT"
-                            ? "error"
-                            : "purple"
-                        }
+                        variant={getBadgeVariant(product.badge)}
                         className="absolute left-3 top-3"
                       >
-                        {product.badge === "BEST_SELLER"
-                          ? "🔥 Best"
-                          : product.badge === "HOT"
-                          ? "🔥 Hot"
-                          : "⭐ Premium"}
+                        {getBadgeLabel(product.badge)}
                       </Badge>
                     )}
                     <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1">
@@ -251,7 +309,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Facebook Services */}
+      {/* Social Media Services */}
       <section className="py-16 border-t border-[#1E293B]">
         <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
           <div className="flex items-center justify-between mb-8">
@@ -261,39 +319,154 @@ export default function HomePage() {
               </h2>
               <p className="text-[#94A3B8] mt-1">Các dịch vụ hỗ trợ tài khoản Facebook</p>
             </div>
-            <Link href="/dich-vu-facebook" className="hidden sm:flex items-center gap-1 text-sm text-[#3B82F6] hover:underline">
+            <Link href="/dich-vu-mxh" className="hidden sm:flex items-center gap-1 text-sm text-[#3B82F6] hover:underline">
               Xem tất cả <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {mockServices.map((service) => (
-              <Card key={service.id} hover className="group cursor-pointer">
-                <CardContent className="p-5">
-                  <div className="flex gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] bg-[#3B82F6]/10">
-                      <span className="text-2xl">{service.icon}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-sora font-semibold text-white mb-1">
-                        {service.name}
-                      </h3>
-                      <p className="text-sm text-[#94A3B8] mb-3 line-clamp-2">
-                        {service.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <p className="font-sora font-bold text-[#3B82F6]">
-                          Từ {formatCurrency(service.price)}
+            {(loading ? [] : fbServices).map((service) => (
+                <Card key={service.id} hover className="group cursor-pointer">
+                  <CardContent className="p-5">
+                    <div className="flex gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#1877F2] to-[#0D8BD9]">
+                        <span className="text-2xl">{service.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-sora font-semibold text-white mb-1">
+                          {service.name}
+                        </h3>
+                        <p className="text-sm text-[#94A3B8] mb-3 line-clamp-2">
+                          {service.description}
                         </p>
-                        <Button size="sm" variant="outline" className="group-hover:border-[#3B82F6]">
-                          Đặt dịch vụ
-                        </Button>
+                        <div className="flex items-center justify-between">
+                          <p className="font-sora font-bold text-[#3B82F6]">
+                            Từ {formatCurrency(service.price)}
+                          </p>
+                          <Button size="sm" variant="outline" className="group-hover:border-[#3B82F6]" onClick={() => {
+                            if (!session?.user) { router.push("/login"); return; }
+                            if (!userFromStore || userFromStore.balance < service.price) {
+                              router.push("/nap-tien");
+                              return;
+                            }
+                            setSelectedService(service);
+                          }}>
+                            Đặt dịch vụ
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Instagram Services */}
+      <section className="py-16 border-t border-[#1E293B]">
+        <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="font-sora text-2xl lg:text-3xl font-bold text-white">
+                Dịch vụ Instagram
+              </h2>
+              <p className="text-[#94A3B8] mt-1">Dịch vụ hỗ trợ tài khoản Instagram</p>
+            </div>
+            <Link href="/dich-vu-mxh" className="hidden sm:flex items-center gap-1 text-sm text-[#E4405F] hover:underline">
+              Xem tất cả <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {(loading ? [] : igServices).map((service) => (
+                <Card key={service.id} hover className="group cursor-pointer">
+                  <CardContent className="p-5">
+                    <div className="flex gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#E4405F] to-[#F77737]">
+                        <span className="text-2xl">{service.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-sora font-semibold text-white mb-1">
+                          {service.name}
+                        </h3>
+                        <p className="text-sm text-[#94A3B8] mb-3 line-clamp-2">
+                          {service.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-sora font-bold text-[#E4405F]">
+                            Từ {formatCurrency(service.price)}
+                          </p>
+                          <Button size="sm" variant="outline" className="group-hover:border-[#E4405F]" onClick={() => {
+                            if (!session?.user) { router.push("/login"); return; }
+                            if (!userFromStore || userFromStore.balance < service.price) {
+                              router.push("/nap-tien");
+                              return;
+                            }
+                            setSelectedService(service);
+                          }}>
+                            Đặt dịch vụ
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TikTok Services */}
+      <section className="py-16 border-t border-[#1E293B]">
+        <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="font-sora text-2xl lg:text-3xl font-bold text-white">
+                Dịch vụ TikTok
+              </h2>
+              <p className="text-[#94A3B8] mt-1">Dịch vụ hỗ trợ tài khoản TikTok</p>
+            </div>
+            <Link href="/dich-vu-mxh" className="hidden sm:flex items-center gap-1 text-sm text-[#25F4EE] hover:underline">
+              Xem tất cả <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {(loading ? [] : ttServices).map((service) => (
+                <Card key={service.id} hover className="group cursor-pointer">
+                  <CardContent className="p-5">
+                    <div className="flex gap-4">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#000000] to-[#25F4EE]">
+                        <span className="text-2xl">{service.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-sora font-semibold text-white mb-1">
+                          {service.name}
+                        </h3>
+                        <p className="text-sm text-[#94A3B8] mb-3 line-clamp-2">
+                          {service.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-sora font-bold text-[#25F4EE]">
+                            Từ {formatCurrency(service.price)}
+                          </p>
+                          <Button size="sm" variant="outline" className="group-hover:border-[#25F4EE]" onClick={() => {
+                            if (!session?.user) { router.push("/login"); return; }
+                            if (!userFromStore || userFromStore.balance < service.price) {
+                              router.push("/nap-tien");
+                              return;
+                            }
+                            setSelectedService(service);
+                          }}>
+                            Đặt dịch vụ
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </div>
       </section>
@@ -313,7 +486,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {mockCategories.map((cat) => (
+            {(loading ? [] : categories).map((cat) => (
               <Link key={cat.name} href="#">
                 <Card hover glow className="text-center group cursor-pointer">
                   <CardContent className="p-5">
@@ -395,6 +568,16 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {selectedService && userFromStore && (
+        <OrderFormModal
+          service={selectedService}
+          user={userFromStore}
+          onClose={() => setSelectedService(null)}
+          onRequireLogin={() => router.push("/login")}
+          onRequireNapTien={() => router.push("/nap-tien")}
+        />
+      )}
 
     </div>
   );

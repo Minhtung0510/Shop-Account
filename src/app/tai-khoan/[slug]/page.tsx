@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { mockProducts } from "@/lib/mock-data";
-import { formatCurrency, getBadgeColor } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store";
 import { toast } from "sonner";
 import {
@@ -21,20 +20,47 @@ import {
   Minus,
   Plus,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Product } from "@/types";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
-  const product = mockProducts.find((p) => p.slug === slug) || mockProducts[0];
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const addItem = useCartStore((s) => s.addItem);
 
+  useEffect(() => {
+    fetchProduct();
+  }, [slug]);
+
+  const fetchProduct = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/products/${encodeURIComponent(slug)}`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setProduct(null);
+        }
+        return;
+      }
+      const data = await res.json();
+      setProduct(data);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddToCart = () => {
+    if (!product) return;
     addItem(product, quantity);
     toast.success(`Đã thêm ${quantity} "${product.name}" vào giỏ hàng`, {
       description: `Tổng: ${formatCurrency(product.price * quantity)}`,
@@ -46,9 +72,29 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
+    if (!product) return;
     addItem(product, quantity);
     router.push("/gio-hang");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#3B82F6]" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="font-sora text-xl font-bold text-white mb-2">Không tìm thấy sản phẩm</h2>
+          <Button onClick={() => router.push("/tai-khoan")}>Quay lại</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8">
@@ -116,7 +162,7 @@ export default function ProductDetailPage() {
             className="space-y-6"
           >
             <div>
-              <p className="text-sm text-[#64748B] mb-2">{product.category.name}</p>
+              <p className="text-sm text-[#64748B] mb-2">{product.category?.name}</p>
               <h1 className="font-sora text-3xl font-bold text-white mb-4">{product.name}</h1>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">

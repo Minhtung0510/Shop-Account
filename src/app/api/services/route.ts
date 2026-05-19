@@ -1,0 +1,26 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const platform = searchParams.get("platform") || "";
+
+    const where: Record<string, unknown> = { status: "ACTIVE" };
+    if (platform) {
+      where.category = platform;
+    }
+
+    const services = await db.service.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(services);
+  } catch (error) {
+    console.error("Services API error:", error);
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+  }
+}

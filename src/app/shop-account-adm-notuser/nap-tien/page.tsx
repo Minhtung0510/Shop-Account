@@ -1,8 +1,7 @@
 "use client";
 
 import { AdminSidebar } from "@/components/shared/admin-sidebar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { CheckCircle, XCircle } from "lucide-react";

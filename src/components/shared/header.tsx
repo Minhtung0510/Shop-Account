@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
-  User,
   ShoppingCart,
   History,
   Wallet,
@@ -15,61 +15,60 @@ import {
   X,
   LogOut,
   ChevronDown,
-  Users,
-  LayoutDashboard,
-  Package,
-  Receipt,
-  CreditCard,
   Sparkles,
   Shield,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useCartStore, useUIStore } from "@/store";
-import { useMockSession } from "@/lib/mock-auth";
-import { clearMockSession } from "@/lib/mock-auth";
-import { useRouter } from "next/navigation";
+import { useCartStore, useUIStore, useUserStore } from "@/store";
 
-const publicNavItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  hasDropdown?: boolean;
+};
+
+const socialDropdownItems = [
+  { label: "Dịch vụ Facebook", href: "/dich-vu-facebook", icon: "📘" },
+  { label: "Dịch vụ Instagram", href: "/dich-vu-instagram", icon: "📸" },
+  { label: "Dịch vụ TikTok", href: "/dich-vu-tiktok", icon: "🎵" },
+];
+
+const publicNavItems: NavItem[] = [
   { href: "/", label: "Trang chủ", icon: Home },
-  // { href: "/tai-khoan", label: "Tài khoản", icon: User },
-  { href: "/dich-vu-facebook", label: "Dịch vụ Facebook", icon: Sparkles },
+  { href: "/dich-vu-facebook", label: "Dịch vụ MXH", icon: Sparkles, hasDropdown: true },
+  { href: "/dich-vu-tuong-tac", label: "Dịch vụ Tương tác", icon: Sparkles },
   { href: "/nap-tien", label: "Nạp tiền", icon: Wallet },
   { href: "/lich-su", label: "Lịch sử", icon: History },
   { href: "/lien-he", label: "Liên hệ", icon: Shield },
 ];
 
-const adminNavItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/nguoi-dung", label: "Người dùng", icon: Users },
-  { href: "/admin/san-pham", label: "Sản phẩm", icon: Package },
-  { href: "/admin/don-hang", label: "Đơn hàng", icon: Receipt },
-  { href: "/admin/nap-tien", label: "Nạp tiền", icon: CreditCard },
-  { href: "/admin/dich-vu", label: "Dịch vụ", icon: Sparkles },
-  { href: "/admin/cai-dat", label: "Cài đặt", icon: Settings },
-];
-
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { data: session } = useMockSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSocialMenuOpen, setIsSocialMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const userFromStore = useUserStore((s) => s.user);
+  const fetchUser = useUserStore((s) => s.fetchUser);
   const cartItemCount = useCartStore((s) => s.getItemCount());
   const openCart = useUIStore((s) => s.openCart);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchUser();
+  }, [pathname]);
 
-  const isAdmin = session?.user?.role === "ADMIN";
-  const navItems = isAdmin ? [...publicNavItems, ...adminNavItems] : publicNavItems;
+  const navItems = publicNavItems;
 
   const handleSignOut = () => {
-    clearMockSession();
-    router.push("/");
-    router.refresh();
+    signOut({ callbackUrl: "/" });
+  };
+
+  const handleInteractionService = () => {
+    window.location.href = "/dich-vu-tuong-tac";
   };
 
   return (
@@ -89,20 +88,69 @@ export function Header() {
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navItems.slice(0, 6).map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "px-4 py-2 rounded-[12px] text-sm font-medium transition-all duration-200",
-                    pathname === item.href
-                      ? "bg-[#1F2937] text-white"
-                      : "text-[#94A3B8] hover:text-white hover:bg-[#1F2937]"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                if (item.hasDropdown && item.href === "/dich-vu-facebook") {
+                  return (
+                    <div key={item.href} className="relative">
+                      <button
+                        onClick={() => setIsSocialMenuOpen(!isSocialMenuOpen)}
+                        className={cn(
+                          "flex items-center gap-1 px-4 py-2 rounded-[12px] text-sm font-medium transition-all duration-200",
+                          pathname.startsWith("/dich-vu")
+                            ? "bg-[#1F2937] text-white"
+                            : "text-[#94A3B8] hover:text-white hover:bg-[#1F2937]"
+                        )}
+                      >
+                        {item.label}
+                        <ChevronDown className={cn("h-4 w-4 transition-transform", isSocialMenuOpen && "rotate-180")} />
+                      </button>
+
+                      <AnimatePresence>
+                        {isSocialMenuOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 8 }}
+                            className="absolute left-0 top-full mt-2 w-56 rounded-[16px] border border-[#1E293B] bg-[#111827] shadow-xl overflow-hidden z-50"
+                          >
+                            {socialDropdownItems.map((subItem) => (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                onClick={() => setIsSocialMenuOpen(false)}
+                                className={cn(
+                                  "flex items-center gap-3 px-4 py-3 text-sm transition-colors",
+                                  pathname === subItem.href
+                                    ? "bg-[#1F2937] text-white"
+                                    : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                                )}
+                              >
+                                <span className="text-lg">{subItem.icon}</span>
+                                {subItem.label}
+                                <ArrowRight className="h-3 w-3 ml-auto" />
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "px-4 py-2 rounded-[12px] text-sm font-medium transition-all duration-200",
+                      pathname === item.href
+                        ? "bg-[#1F2937] text-white"
+                        : "text-[#94A3B8] hover:text-white hover:bg-[#1F2937]"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Right Section */}
@@ -121,7 +169,7 @@ export function Header() {
               </button>
 
               {/* Auth Section */}
-              {mounted && session ? (
+              {mounted && userFromStore ? (
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -129,13 +177,13 @@ export function Header() {
                   >
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
                       <span className="text-xs font-bold text-white">
-                        {session.user.name?.[0]?.toUpperCase() || "U"}
+                        {userFromStore.name?.[0]?.toUpperCase() || "U"}
                       </span>
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-xs font-medium text-white">{session.user.name}</p>
+                      <p className="text-xs font-medium text-white">{userFromStore.name}</p>
                       <p className="text-[10px] text-[#94A3B8]">
-                        {formatCurrency(session.user.balance)}
+                        {formatCurrency(userFromStore.balance || 0)}
                       </p>
                     </div>
                     <ChevronDown className={cn(
@@ -153,8 +201,8 @@ export function Header() {
                         className="absolute right-0 top-full mt-2 w-56 rounded-[16px] border border-[#1E293B] bg-[#111827] shadow-xl"
                       >
                         <div className="border-b border-[#1E293B] p-3">
-                          <p className="font-medium text-white">{session.user.name}</p>
-                          <p className="text-xs text-[#94A3B8]">{session.user.email}</p>
+                          <p className="font-medium text-white">{userFromStore.name}</p>
+                          <p className="text-xs text-[#94A3B8]">{userFromStore.email}</p>
                         </div>
                         <div className="p-1">
                           <Link
@@ -216,23 +264,73 @@ export function Header() {
               className="lg:hidden border-t border-[#1E293B] overflow-hidden"
             >
               <nav className="p-4 space-y-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium transition-all",
-                      pathname === item.href
-                        ? "bg-[#1F2937] text-white"
-                        : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                ))}
-                {mounted && !session && (
+                {navItems.map((item) => {
+                  if (item.hasDropdown && item.href === "/dich-vu-facebook") {
+                    return (
+                      <div key={item.href}>
+                        <button
+                          onClick={() => setIsSocialMenuOpen(!isSocialMenuOpen)}
+                          className={cn(
+                            "w-full flex items-center justify-between gap-3 rounded-[12px] px-4 py-3 text-sm font-medium transition-all",
+                            pathname.startsWith("/dich-vu")
+                              ? "bg-[#1F2937] text-white"
+                              : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            {item.label}
+                          </div>
+                          <ChevronDown className={cn("h-4 w-4 transition-transform", isSocialMenuOpen && "rotate-180")} />
+                        </button>
+                        <AnimatePresence>
+                          {isSocialMenuOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="ml-6 mt-1 space-y-1 overflow-hidden"
+                            >
+                              {socialDropdownItems.map((subItem) => (
+                                <Link
+                                  key={subItem.href}
+                                  href={subItem.href}
+                                  onClick={() => { setIsMenuOpen(false); setIsSocialMenuOpen(false); }}
+                                  className={cn(
+                                    "flex items-center gap-3 rounded-[12px] px-4 py-2 text-sm transition-colors",
+                                    pathname === subItem.href
+                                      ? "bg-[#1F2937] text-white"
+                                      : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                                  )}
+                                >
+                                  <span className="text-lg">{subItem.icon}</span>
+                                  {subItem.label}
+                                </Link>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-[12px] px-4 py-3 text-sm font-medium transition-all",
+                        pathname === item.href
+                          ? "bg-[#1F2937] text-white"
+                          : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                {mounted && !userFromStore && (
                   <div className="flex gap-2 pt-2">
                     <Link href="/login" className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { findMockUser } from "@/lib/mock-users";
+import { signIn } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -10,31 +9,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Thiếu email hoặc mật khẩu" }, { status: 400 });
     }
 
-    const user = findMockUser(email, password);
-    if (!user) {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
       return NextResponse.json({ error: "Email hoặc mật khẩu không đúng" }, { status: 401 });
     }
 
-    const cookieStore = await cookies();
-    cookieStore.set("shopaccount_session", JSON.stringify(user), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24,
-      path: "/",
-    });
-
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        balance: user.balance,
-        rank: user.rank,
-      },
-    });
-  } catch {
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

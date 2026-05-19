@@ -3,83 +3,46 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum ProductStatus {
-  ACTIVE
-  INACTIVE
-  OUT_OF_STOCK
-}
-
-enum ProductBadge {
-  BEST_SELLER
-  HOT
-  PREMIUM
-  NEW
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SUCCESS
-  FAILED
-  REFUNDED
-}
-
-enum PaymentMethod {
-  BALANCE
-  QR_BANKING
-}
-
-enum TopupStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  username      String    @unique
-  password      String?
-  phone         String?   @unique
-  avatar        String?
-  role          UserRole  @default(USER)
-  balance       Float     @default(0)
-  rank          String    @default("Bronze")
-  emailVerified DateTime?
-  twoFactorEnabled Boolean @default(false)
+  id               String    @id @default(cuid())
+  email            String    @unique
+  username         String    @unique
+  password         String?
+  phone            String?   @unique
+  avatar           String?
+  role             String    @default("USER")
+  balance          Float     @default(0)
+  rank             String    @default("Bronze")
+  emailVerified    DateTime?
+  twoFactorEnabled Boolean   @default(false)
   twoFactorSecret  String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  cartItems     CartItem[]
-  topupTransactions TopupTransaction[]
+  accounts           Account[]
+  sessions           Session[]
+  orders             Order[]
+  cartItems          CartItem[]
+  topupTransactions  TopupTransaction[]
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
   scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id_token           String?
+  session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -111,58 +74,58 @@ model Category {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  products     Product[]
+  products Product[]
 }
 
 model Product {
-  id            String        @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
-  slug          String        @unique
-  description   String        @db.Text
+  slug          String  @unique
+  description   String
   price         Float
   originalPrice Float?
   categoryId    String
   thumbnail     String
-  images        String[]
-  stock         Int           @default(0)
-  rating        Float         @default(0)
-  sold          Int           @default(0)
+  images        String
+  stock         Int     @default(0)
+  rating        Float   @default(0)
+  sold          Int     @default(0)
   warranty      String?
-  badge         ProductBadge?
-  status        ProductStatus @default(ACTIVE)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  badge         String?
+  status        String  @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  category      Category      @relation(fields: [categoryId], references: [id])
-  orderItems    OrderItem[]
-  cartItems     CartItem[]
+  category   Category    @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
 }
 
 model Order {
-  id              String        @id @default(cuid())
+  id              String   @id @default(cuid())
   userId          String
   totalAmount     Float
-  status          OrderStatus   @default(PENDING)
-  paymentMethod   PaymentMethod @default(BALANCE)
+  status          String   @default("PENDING")
+  paymentMethod   String   @default("BALANCE")
   transactionId   String?
   voucherCode     String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user            User          @relation(fields: [userId], references: [id])
-  orderItems      OrderItem[]
+  user       User       @relation(fields: [userId], references: [id])
+  orderItems OrderItem[]
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
-  quantity    Int      @default(1)
+  quantity    Int     @default(1)
   price       Float
-  accountData String?  @db.Text
+  accountData String?
 
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 }
 
 model CartItem {
@@ -172,24 +135,24 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
 
 model TopupTransaction {
-  id               String      @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   amount           Float
   bankCode         String
   transferContent  String
-  status           TopupStatus @default(PENDING)
+  status           String    @default("PENDING")
   verifiedAt       DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  user             User        @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Service {
@@ -197,7 +160,7 @@ model Service {
   name        String
   slug        String   @unique
   icon        String
-  description String   @db.Text
+  description String
   price       Float
   category    String
   status      String   @default("ACTIVE")
@@ -208,5 +171,20 @@ model Service {
 model Setting {
   id    String @id @default(cuid())
   key   String @unique
-  value String @db.Text
+  value String
+}
+
+model ServiceOrder {
+  id                 String   @id @default(cuid())
+  serviceId          String
+  serviceName        String
+  serviceSlug        String   @default("")
+  serviceIcon        String   @default("")
+  serviceDescription String   @default("")
+  servicePrice       Float
+  phone              String
+  telegram           String?
+  status             String   @default("PENDING")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

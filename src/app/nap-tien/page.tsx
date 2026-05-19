@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
-import { useMockSession } from "@/lib/mock-auth";
+import { useSession } from "@/hooks/useSession";
+import { useUserStore } from "@/store";
 import {
   QrCode,
   Copy,
@@ -31,7 +32,7 @@ const banks = [
 const quickAmounts = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 export default function TopupPage() {
-  const { data: session } = useMockSession();
+  const { data: session } = useSession();
   const [selectedBank, setSelectedBank] = useState("VCB");
   const [amount, setAmount] = useState(100000);
   const [qrGenerated, setQrGenerated] = useState(false);
@@ -42,6 +43,8 @@ export default function TopupPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const userFromStore = useUserStore((s) => s.user);
 
   const uid = session?.user?.id?.slice(-6).toUpperCase() || "ABC123";
   const transferContent = `UID_${uid}`;
@@ -89,7 +92,7 @@ export default function TopupPage() {
         {mounted && session && (
           <div className="mb-6 flex items-center justify-center gap-2 rounded-[12px] border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-4 py-2 text-sm text-[#3B82F6]">
             <Wallet className="h-4 w-4" />
-            Số dư hiện tại: <span className="font-bold">{formatCurrency(session.user.balance)}</span>
+            Số dư hiện tại: <span className="font-bold">{formatCurrency(userFromStore?.balance ?? session.user.balance)}</span>
           </div>
         )}
 

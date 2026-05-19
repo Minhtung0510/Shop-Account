@@ -6,19 +6,19 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { mockOrders } from "@/lib/mock-data";
-import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import {
   History,
-  ChevronRight,
   CheckCircle,
   Clock,
   XCircle,
   RefreshCw,
   Eye,
+  Loader2,
 } from "lucide-react";
-import { useMockSession } from "@/lib/mock-auth";
+import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; color: string }> = {
   SUCCESS: { icon: CheckCircle, label: "Thành công", color: "bg-[#22C55E]" },
@@ -28,17 +28,64 @@ const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; co
   REFUNDED: { icon: RefreshCw, label: "Hoàn tiền", color: "bg-[#A855F7]" },
 };
 
+interface OrderItem {
+  id: string;
+  product?: { name: string };
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  totalAmount: number;
+  status: "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED" | "REFUNDED";
+  paymentMethod: string;
+  items: OrderItem[];
+  createdAt: string;
+}
+
 export default function OrderHistoryPage() {
-  const { data: session } = useMockSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
-  if (!mounted || !session) {
+  useEffect(() => {
+    if (session) {
+      fetchOrders();
+    }
+  }, [session]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/orders");
+      if (!res.ok) throw new Error("Không thể tải đơn hàng");
+      const data = await res.json();
+      setOrders(data);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (status === "loading" || loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-[#3B82F6]" />
+      </div>
+    );
+  }
+
+  if (!session) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center py-12">
         <div className="text-center">
@@ -52,8 +99,8 @@ export default function OrderHistoryPage() {
   }
 
   const filteredOrders = filter === "all"
-    ? mockOrders
-    : mockOrders.filter((o) => o.status === filter);
+    ? orders
+    : orders.filter((o) => o.status === filter);
 
   return (
     <div className="min-h-screen py-8">
@@ -97,25 +144,28 @@ export default function OrderHistoryPage() {
               <tbody className="divide-y divide-[#1E293B]">
                 {filteredOrders.map((order) => {
                   const config = statusConfig[order.status];
+                  const productNames = order.items?.map((item) => item.product?.name).join(", ") || "N/A";
                   return (
                     <tr key={order.id} className="hover:bg-[#1F2937]/50 transition-colors">
                       <td className="px-4 py-3">
                         <span className="font-mono text-sm text-[#3B82F6]">{order.id}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-white">{order.product}</span>
+                        <span className="text-sm text-white line-clamp-1 max-w-[200px] block">{productNames}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-sora text-sm font-bold text-white">{formatCurrency(order.price)}</span>
+                        <span className="font-sora text-sm font-bold text-white">{formatCurrency(order.totalAmount)}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge className={`${config.color} text-white border-0`}>
-                          <config.icon className="h-3 w-3 mr-1" />
-                          {config.label}
-                        </Badge>
+                        {config && (
+                          <Badge className={`${config.color} text-white border-0`}>
+                            <config.icon className="h-3 w-3 mr-1" />
+                            {config.label}
+                          </Badge>
+                        )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-[#94A3B8]">{order.date}</span>
+                        <span className="text-sm text-[#94A3B8]">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</span>
                       </td>
                       <td className="px-4 py-3">
                         <Button variant="ghost" size="sm">

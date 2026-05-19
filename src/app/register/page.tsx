@@ -7,8 +7,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, User, Phone, Eye, EyeOff, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MOCK_USERS } from "@/lib/mock-users";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,30 +51,26 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      const existing = MOCK_USERS.find(
-        (u) => u.email.toLowerCase() === formData.email.toLowerCase()
-      );
-      if (existing) {
-        setErrors({ form: "Email đã được sử dụng" });
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors({ form: data.error || "Đã xảy ra lỗi. Vui lòng thử lại." });
         setLoading(false);
         return;
       }
 
-      const newUser = {
-        id: String(MOCK_USERS.length + 1),
-        name: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: "USER" as const,
-        balance: 0,
-        orders: 0,
-        rank: "Bronze",
-        created: new Date().toISOString().split("T")[0],
-      };
-
-      MOCK_USERS.push(newUser);
-      localStorage.setItem("shopaccount_session", JSON.stringify(newUser));
-      window.location.href = "/";
+      router.push("/login?registered=true");
     } catch {
       setErrors({ form: "Đã xảy ra lỗi. Vui lòng thử lại." });
     } finally {

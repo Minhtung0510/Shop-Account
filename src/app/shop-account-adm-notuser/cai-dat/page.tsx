@@ -28,7 +28,6 @@ export default function AdminSettingsPage() {
               </div>
             </CardContent>
           </Card>
-
           <Card className="!rounded-[16px]">
             <CardHeader className="p-5 pb-3">
               <CardTitle className="text-white">Thông tin ngân hàng</CardTitle>

@@ -2,7 +2,7 @@ import { db } from "../src/lib/db";
 import bcrypt from "bcryptjs";
 
 async function main() {
-  console.log("🌱 Starting seed...");
+  console.log("Starting seed...");
 
   // Create admin user
   const adminPassword = await bcrypt.hash("admin123", 12);
@@ -20,7 +20,7 @@ async function main() {
       emailVerified: new Date(),
     },
   });
-  console.log("✅ Admin user created:", admin.email);
+  console.log("Admin user created:", admin.email);
 
   // Create demo user
   const userPassword = await bcrypt.hash("user123", 12);
@@ -38,7 +38,7 @@ async function main() {
       emailVerified: new Date(),
     },
   });
-  console.log("✅ Demo user created:", user.email);
+  console.log("Demo user created:", user.email);
 
   // Create categories
   const categories = await Promise.all([
@@ -93,7 +93,7 @@ async function main() {
       create: { name: "TikTok", slug: "tiktok", icon: "🎵", productCount: 12 },
     }),
   ]);
-  console.log(`✅ ${categories.length} categories created`);
+  console.log(`${categories.length} categories created`);
 
   // Create products
   const products = [
@@ -105,40 +105,65 @@ async function main() {
     { name: "YouTube Premium 6 tháng", slug: "youtube-premium-6-thang", price: 89000, originalPrice: 149000, categorySlug: "youtube", stock: 42, rating: 4.8, sold: 5620, badge: "PREMIUM" },
     { name: "Discord Nitro 1 tháng", slug: "discord-nitro-1-thang", price: 45000, categorySlug: "discord", stock: 25, rating: 4.5, sold: 2100, badge: "NEW" },
     { name: "ChatGPT Plus 1 tháng", slug: "chatgpt-plus-1-thang", price: 150000, originalPrice: 200000, categorySlug: "chatgpt", stock: 30, rating: 4.9, sold: 4500, badge: "HOT" },
+    { name: "Disney+ Premium 1 tháng", slug: "disney-premium-1-thang", price: 59000, originalPrice: 99000, categorySlug: "disney", stock: 38, rating: 4.8, sold: 6200, badge: "HOT" },
+    { name: "CapCut Pro 1 năm", slug: "capcut-pro-1-nam", price: 35000, categorySlug: "capcut", stock: 20, rating: 4.6, sold: 4100, badge: "NEW" },
   ];
 
+  const productImages: Record<string, string> = {
+    "netflix-premium-1-thang": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+    "netflix-premium-3-thang": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+    "spotify-premium-1-nam": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+    "spotify-family-1-thang": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+    "canva-pro-1-nam": "https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg",
+    "youtube-premium-6-thang": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
+    "discord-nitro-1-thang": "https://upload.wikimedia.org/wikipedia/en/9/98/Discord_logo.svg",
+    "chatgpt-plus-1-thang": "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
+    "disney-premium-1-thang": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
+    "capcut-pro-1-nam": "https://images.unsplash.com/photo-1635776062043-223faf322554?w=400&h=400&fit=crop",
+  };
+
   for (const p of products) {
-    const cat = categories.find((c) => c.slug === p.categorySlug)!;
+    const cat = categories.find((c: typeof categories[number]) => c.slug === p.categorySlug)!;
     await db.product.upsert({
       where: { slug: p.slug },
-      update: {},
+      update: { thumbnail: productImages[p.slug] || `https://picsum.photos/seed/${p.slug}/400/400` },
       create: {
         name: p.name,
         slug: p.slug,
-        description: `Tài khoản ${p.name} chất lượng cao, giao tự động ngay sau thanh toán.`,
+        description: `Tai khoan ${p.name} chat luong cao, giao tu dong ngay sau thanh toan.`,
         price: p.price,
         originalPrice: p.originalPrice || null,
         categoryId: cat.id,
-        thumbnail: `https://picsum.photos/seed/${p.slug}/400/400`,
-        images: [],
+        thumbnail: productImages[p.slug] || `https://picsum.photos/seed/${p.slug}/400/400`,
+        images: "[]",
         stock: p.stock,
         rating: p.rating,
         sold: p.sold,
-        warranty: "1 tháng",
-        badge: p.badge as "BEST_SELLER" | "HOT" | "PREMIUM" | "NEW" | null,
+        warranty: "1 thang",
+        badge: p.badge || null,
         status: "ACTIVE",
       },
     });
   }
-  console.log(`✅ ${products.length} products created`);
+  console.log(`${products.length} products created`);
 
   // Create services
   const services = [
-    { name: "Khôi phục mật khẩu", slug: "khoi-phuc-mat-khau", icon: "🔑", description: "Hỗ trợ khôi phục mật khẩu tài khoản Facebook bị quên hoặc mất.", price: 50000, category: "Khôi phục" },
-    { name: "Report tài khoản cá nhân", slug: "report-tai-khoan", icon: "🚫", description: "Report tài khoản Facebook vi phạm, spam, lừa đảo.", price: 30000, category: "Report" },
-    { name: "Mở checkpoint", slug: "mo-checkpoint", icon: "🔓", description: "Dịch vụ mở checkpoint 72h cho tài khoản Facebook bị khóa.", price: 100000, category: "Mở khóa" },
-    { name: "Mở khóa tài khoản", slug: "mo-khoa-tai-khoan", icon: "🛡️", description: "Mở khóa tài khoản Facebook bị vô hiệu hóa.", price: 150000, category: "Mở khóa" },
-    { name: "Hỗ trợ BM", slug: "ho-tro-bm", icon: "⚙️", description: "Dịch vụ setup, quản lý Business Manager cho Facebook Ads.", price: 200000, category: "Hỗ trợ" },
+    // Facebook
+    { name: "Khôi phục mật khẩu Facebook", slug: "khoi-phuc-mat-khau-facebook", icon: "🔑", description: "Khôi phục mật khẩu Facebook nhanh chóng, an toàn.", price: 500000, category: "Facebook" },
+    { name: "Report tài khoản cá nhân Facebook", slug: "report-tai-khoan-ca-nhan-facebook", icon: "🚫", description: "Report tài khoản cá nhân Facebook nhanh chóng.", price: 500000, category: "Facebook" },
+    { name: "Report Fanpage Facebook", slug: "report-fanpage-facebook", icon: "📘", description: "Report Fanpage Facebook hiệu quả.", price: 500000, category: "Facebook" },
+    { name: "Report bài viết Facebook", slug: "report-bai-viet-facebook", icon: "📝", description: "Report bài viết Facebook nhanh gọn.", price: 500000, category: "Facebook" },
+    { name: "Mở checkpoint Facebook", slug: "mo-checkpoint-facebook", icon: "🔓", description: "Mở checkpoint Facebook an toàn, không mất tài khoản.", price: 500000, category: "Facebook" },
+    { name: "Mở khóa tài khoản Facebook", slug: "mo-khoa-tai-khoan-facebook", icon: "🔐", description: "Mở khóa tài khoản Facebook nhanh chóng.", price: 500000, category: "Facebook" },
+    { name: "Hỗ trợ BM Facebook", slug: "ho-tro-bm-facebook", icon: "💼", description: "Hỗ trợ quản lý Business Manager Facebook.", price: 500000, category: "Facebook" },
+    // TikTok
+    { name: "Mở khóa TikTok", slug: "mo-khoa-tiktok", icon: "🔓", description: "Mở khóa tài khoản TikTok nhanh chóng.", price: 500000, category: "TikTok" },
+    { name: "Report TikTok", slug: "report-tiktok", icon: "🚫", description: "Report tài khoản TikTok hiệu quả.", price: 500000, category: "TikTok" },
+    { name: "Kháng nghị livestream TikTok", slug: "khang-nghi-livestream-tiktok", icon: "📺", description: "Kháng nghị livestream TikTok bị banned.", price: 500000, category: "TikTok" },
+    // Instagram
+    { name: "Tích xanh Instagram", slug: "tich-xanh-instagram", icon: "✅", description: "Xin tích xanh (verified) Instagram uy tín.", price: 500000, category: "Instagram" },
+    { name: "Mở khóa Instagram", slug: "mo-khoa-instagram", icon: "🔓", description: "Mở khóa tài khoản Instagram nhanh chóng.", price: 500000, category: "Instagram" },
   ];
 
   for (const s of services) {
@@ -148,9 +173,9 @@ async function main() {
       create: s,
     });
   }
-  console.log(`✅ ${services.length} services created`);
+  console.log(`${services.length} services created`);
 
-  console.log("🎉 Seed completed!");
+  console.log("Seed completed!");
 }
 
 main()
