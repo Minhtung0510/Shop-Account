@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AdminSidebar } from "@/components/shared/admin-sidebar";
+import { DashboardCharts } from "@/components/shared/dashboard-charts";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import {
   Users,
@@ -21,43 +21,24 @@ async function getDashboardData() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 
-  const [
-    totalUsers,
-    productOrders,
-    productRevenue,
-    todayProductOrders,
-    productStats,
-    serviceOrders,
-    recentServiceOrders,
-  ] = await Promise.all([
-    db.user.count({ where: { role: "USER" } }),
+  const [totalUsers, productOrders, productRevenue, todayProductOrders, serviceOrders] =
+    await Promise.all([
+      db.user.count({ where: { role: "USER" } }),
 
-    db.order.findMany({
-      where: { createdAt: { gte: startOfMonth } },
-      select: { totalAmount: true, status: true, createdAt: true },
-    }),
+      db.order.findMany({
+        where: { createdAt: { gte: startOfMonth } },
+        select: { totalAmount: true, status: true, createdAt: true },
+      }),
 
-    db.order.aggregate({
-      where: { createdAt: { gte: startOfMonth }, status: "SUCCESS" },
-      _sum: { totalAmount: true },
-    }),
+      db.order.aggregate({
+        where: { createdAt: { gte: startOfMonth }, status: "SUCCESS" },
+        _sum: { totalAmount: true },
+      }),
 
-    db.order.count({ where: { createdAt: { gte: startOfToday } } }),
+      db.order.count({ where: { createdAt: { gte: startOfToday } } }),
 
-    Promise.all([
-      db.order.count({ where: { status: "SUCCESS" } }),
-      db.order.count({ where: { status: "PROCESSING" } }),
-      db.order.count({ where: { status: "FAILED" } }),
-      db.order.count({ where: { status: "PENDING" } }),
-    ]),
-
-    db.serviceOrder.count(),
-
-    db.serviceOrder.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-  ]);
+      db.serviceOrder.count(),
+    ]);
 
   const monthlyRevenue = (productRevenue._sum.totalAmount || 0) + serviceOrders * 500000;
   const totalOrders = productOrders.length + serviceOrders;
@@ -73,12 +54,6 @@ async function getDashboardData() {
       ordersChange: Math.round((totalOrders / 50) * 100),
       revenueChange: 23,
       todayOrdersChange: 15,
-    },
-    orderStats: {
-      success: productStats[0],
-      processing: productStats[1],
-      failed: productStats[2],
-      pending: productStats[3],
     },
   };
 }
@@ -141,27 +116,7 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
 
-          <Card className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
-            <div className="p-5 pb-3 border-b border-[#1E293B]">
-              <h2 className="text-sm font-semibold text-white">Trạng thái đơn hàng sản phẩm</h2>
-            </div>
-            <CardContent className="p-5 space-y-3">
-              {[
-                { label: "Thành công", count: data.orderStats.success, bg: "bg-[#10B981]" },
-                { label: "Đang xử lý", count: data.orderStats.processing, bg: "bg-[#F59E0B]" },
-                { label: "Thất bại", count: data.orderStats.failed, bg: "bg-[#EF4444]" },
-                { label: "Chờ thanh toán", count: data.orderStats.pending, bg: "bg-[#6366F1]" },
-              ].map((status) => (
-                <div key={status.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${status.bg}`} />
-                    <span className="text-sm text-[#94A3B8]">{status.label}</span>
-                  </div>
-                  <span className="text-sm font-bold text-white">{status.count}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <DashboardCharts />
         </div>
       </div>
     </div>

@@ -91,7 +91,7 @@ function EditUserModal({ user, onClose, onSave }: { user?: AdminUser; onClose: (
           <div>
             <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Vai tro</label>
             <select value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              onChange={(e) => setForm({ ...form, role: e.target.value as "ADMIN" | "USER" })}
               className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none">
               <option value="USER">USER</option>
               <option value="ADMIN">ADMIN</option>

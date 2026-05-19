@@ -79,7 +79,7 @@ function ProductsContent() {
       } else if (data.items?.length > 0 && data.items[0]?.category) {
         const uniqueCategories = data.items
           .map((p: Product) => p.category)
-          .filter((c , i, arr) => arr.findIndex((cat: Category) => cat.id === c.id) === i);
+          .filter((c: Category, i: number, arr: Category[]) => arr.findIndex((cat: Category) => cat.id === c.id) === i);
         setCategories(uniqueCategories);
       }
     } catch (error) {

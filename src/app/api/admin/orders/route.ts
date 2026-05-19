@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -57,5 +57,38 @@ export async function GET() {
   } catch (error) {
     console.error("Admin orders API error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { id, type, status } = body;
+
+    if (!id || !type || !status) {
+      return NextResponse.json({ error: "Thieu thong tin" }, { status: 400 });
+    }
+
+    if (type === "PRODUCT") {
+      await db.order.update({
+        where: { id },
+        data: { status },
+      });
+    } else if (type === "SERVICE") {
+      await db.serviceOrder.update({
+        where: { id },
+        data: { status },
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Update order status error:", error);
+    return NextResponse.json({ error: "Loi server" }, { status: 500 });
   }
 }

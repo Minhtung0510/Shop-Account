@@ -176,7 +176,7 @@ export async function POST(request: Request) {
           servicePrice,
           phone,
           telegram: telegram || null,
-          status: "COMPLETED",
+          status: "PENDING",
         },
       });
 

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { Search, Plus, Edit2, Trash2, Eye, Loader2, X, Image, KeyRound, Copy, CheckCircle } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Eye, Loader2, X, Image, KeyRound, Copy, CheckCircle, Upload } from "lucide-react";
 import { formatCurrency as fmt } from "@/lib/utils";
 
 interface Product {
@@ -244,6 +244,9 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPass, setShowPass] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ ok: number; skip: number; error: string } | null>(null);
 
   const fetchAccounts = () => {
     fetch(`/api/admin/accounts?productId=${product.id}`)
@@ -275,6 +278,55 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+
+    const text = await file.text();
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    const accountsParsed: { email: string; password: string }[] = [];
+    let skip = 0;
+
+    for (const line of lines) {
+      const parts = line.split("|");
+      if (parts.length < 2) { skip++; continue; }
+      const email = parts[0].trim();
+      const password = parts.slice(1).join("|").trim();
+      if (!email || !password) { skip++; continue; }
+      accountsParsed.push({ email, password });
+    }
+
+    if (accountsParsed.length === 0) {
+      setImportResult({ ok: 0, skip, error: "Khong co tai khoan hop le trong file" });
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id, accounts: accountsParsed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult({ ok: data.count || accountsParsed.length, skip, error: "" });
+        fetchAccounts();
+      } else {
+        setImportResult({ ok: 0, skip, error: data.error || "Loi khi import" });
+      }
+    } catch {
+      setImportResult({ ok: 0, skip, error: "Loi ket noi" });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -311,24 +363,47 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
         </div>
 
         <div className="p-5 shrink-0 border-b border-[#1E293B]">
+          {importResult && (
+            <div className={`rounded-[8px] px-3 py-2 text-sm mb-3 ${importResult.error ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-green-500/10 text-green-400 border border-green-500/20"}`}>
+              {importResult.error || `Import thanh cong ${importResult.ok} tai khoan${importResult.skip > 0 ? `, ${importResult.skip} dong bi bo qua` : ""}`}
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-3">
             <input
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="Email (VD: netflix@test.com)"
               className="flex-1 rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#3B82F6] focus:outline-none"
-              disabled={saving}
+              disabled={saving || importing}
             />
             <input
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
               placeholder="Mat khau"
               className="flex-1 rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#3B82F6] focus:outline-none"
-              disabled={saving}
+              disabled={saving || importing}
             />
-            <Button size="sm" onClick={handleAdd} disabled={saving || !newEmail || !newPass}>
+            <Button size="sm" onClick={handleAdd} disabled={saving || importing || !newEmail || !newPass}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Them"}
             </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt"
+              onChange={handleFileImport}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={saving || importing}
+              className="flex items-center gap-1.5 rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2 text-xs text-[#94A3B8] hover:border-[#3B82F6] hover:text-white transition-colors disabled:opacity-50"
+            >
+              {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              Import file TXT
+            </button>
+            <span className="text-xs text-[#475569]">Dinh dang: Tài Khoản|Mật Khẩu (moi dong 1 tai khoan)</span>
           </div>
         </div>
 

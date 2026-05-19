@@ -8,19 +8,16 @@ import {
   Package,
   ShoppingBag,
   Headphones,
+  ShieldCheck,
   LayoutGrid,
-  UserCog,
-  Store,
-  CreditCard,
   Banknote,
-  Image,
   Settings,
   LogOut,
   Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useAdminOrderCount } from "@/hooks/useAdmin";
 
 interface NavItem {
   href: string;
@@ -30,36 +27,41 @@ interface NavItem {
   isLogout?: boolean;
 }
 
-const adminSections: { title: string; items: NavItem[] }[] = [
-  {
-    title: "QUẢN TRỊ",
-    items: [
-      { href: "/shop-account-adm-notuser", label: "Tổng quan", icon: LayoutDashboard },
-      { href: "/shop-account-adm-notuser/danh-muc", label: "Danh mục", icon: LayoutGrid },
-      { href: "/shop-account-adm-notuser/nguoi-dung", label: "Người dùng", icon: Users },
-      { href: "/shop-account-adm-notuser/san-pham", label: "Sản phẩm", icon: Package },
-      { href: "/shop-account-adm-notuser/don-hang", label: "Đơn hàng", icon: ShoppingBag },
-      { href: "/shop-account-adm-notuser/dich-vu", label: "Dịch vụ", icon: Headphones },
-      { href: "/shop-account-adm-notuser/nap-tien", label: "Nạp tiền", icon: Banknote },
-      { href: "/shop-account-adm-notuser/cai-dat", label: "Cài đặt Web", icon: Settings },
-    ],
-  },
-  {
-    title: "HỆ THỐNG",
-    items: [
-      { href: "/", label: "Dashboard User", icon: Sun },
-      { href: "/logout", label: "Đăng xuất", icon: LogOut, isLogout: true },
-    ],
-  },
-];
-
 export function AdminSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { data: countData } = useAdminOrderCount();
+
+  const pendingServiceCount = countData?.serviceCount ?? 0;
+  const pendingWarrantyCount = countData?.warrantyCount ?? 0;
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/login" });
   };
+
+  const adminSections: { title: string; items: NavItem[] }[] = [
+    {
+      title: "QUẢN TRỊ",
+      items: [
+        { href: "/shop-account-adm-notuser", label: "Tổng quan", icon: LayoutDashboard },
+        { href: "/shop-account-adm-notuser/danh-muc", label: "Danh mục", icon: LayoutGrid },
+        { href: "/shop-account-adm-notuser/nguoi-dung", label: "Người dùng", icon: Users },
+        { href: "/shop-account-adm-notuser/san-pham", label: "Sản phẩm", icon: Package },
+        { href: "/shop-account-adm-notuser/don-hang", label: "Đơn hàng", icon: ShoppingBag, badge: pendingServiceCount > 0 ? pendingServiceCount : undefined },
+        { href: "/shop-account-adm-notuser/bao-hanh", label: "Bảo hành", icon: ShieldCheck, badge: pendingWarrantyCount > 0 ? pendingWarrantyCount : undefined },
+        { href: "/shop-account-adm-notuser/dich-vu", label: "Dịch vụ", icon: Headphones },
+        { href: "/shop-account-adm-notuser/nap-tien", label: "Nạp tiền", icon: Banknote },
+        { href: "/shop-account-adm-notuser/cai-dat", label: "Cài đặt Web", icon: Settings },
+      ],
+    },
+    {
+      title: "HỆ THỐNG",
+      items: [
+        { href: "/", label: "Dashboard User", icon: Sun },
+        { href: "/logout", label: "Đăng xuất", icon: LogOut, isLogout: true },
+      ],
+    },
+  ];
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[240px] flex-col bg-[#0F172A] border-r border-[#1E293B]">
@@ -70,7 +72,7 @@ export function AdminSidebar() {
             <span className="text-xs font-bold text-white">NM</span>
           </div>
           <div>
-            <span className="text-sm font-bold text-white">NIGHTMARKET</span>
+            <span className="text-sm font-bold text-white">SHOPACCOUNT</span>
             <span className="block text-[10px] text-[#6366F1] -mt-0.5">Admin Panel</span>
           </div>
         </div>
