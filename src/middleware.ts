@@ -28,5 +28,9 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/shop-account-adm-notuser/:path*", "/login", "/register"],
+  matcher: [
+    "/shop-account-adm-notuser/:path*",
+    "/login",
+    "/register",
+  ],
 };

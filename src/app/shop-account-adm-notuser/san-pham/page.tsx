@@ -99,7 +99,7 @@ function ProductModal({ product, categories, onClose, onSave }: {
       <div className="w-full max-w-2xl rounded-[16px] border border-[#1E293B] bg-[#0F172A] max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-[#1E293B] p-5">
           <h2 className="text-lg font-bold text-white">
-            {product ? "Chinh sua san pham" : "Them san pham moi"}
+            {product ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
           </h2>
           <button onClick={onClose} className="rounded-[8px] p-1 text-[#64748B] hover:bg-[#1E293B] hover:text-white">
             <X className="h-5 w-5" />
@@ -115,12 +115,12 @@ function ProductModal({ product, categories, onClose, onSave }: {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Ten san pham *</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Tên sản phẩm *</label>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white placeholder:text-[#475569] focus:border-[#3B82F6] focus:outline-none"
-                placeholder="VD: Tai khoan Facebook 500 friends"
+                placeholder="VD: Tài khoản Facebook 500 friends"
               />
             </div>
 
@@ -136,7 +136,7 @@ function ProductModal({ product, categories, onClose, onSave }: {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Gia goc (VND)</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Giá gốc (VND)</label>
               <input
                 type="number"
                 value={form.originalPrice}
@@ -147,13 +147,13 @@ function ProductModal({ product, categories, onClose, onSave }: {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Danh muc *</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Danh mục *</label>
               <select
                 value={form.categoryId}
                 onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                 className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
               >
-                <option value="">Chon danh muc</option>
+                <option value="">Chọn danh mục</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -161,7 +161,7 @@ function ProductModal({ product, categories, onClose, onSave }: {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Ton kho</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Tồn kho</label>
               <input
                 type="number"
                 value={form.stock}
@@ -178,7 +178,7 @@ function ProductModal({ product, categories, onClose, onSave }: {
                 onChange={(e) => setForm({ ...form, badge: e.target.value })}
                 className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
               >
-                <option value="">Khong co</option>
+                <option value="">Không có</option>
                 <option value="HOT">HOT</option>
                 <option value="BEST_SELLER">Best Seller</option>
                 <option value="PREMIUM">Premium</option>
@@ -186,19 +186,19 @@ function ProductModal({ product, categories, onClose, onSave }: {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Trang thai</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Trạng thái</label>
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
                 className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
               >
-                <option value="ACTIVE">Hoat dong</option>
-                <option value="INACTIVE">An</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="INACTIVE">Ẩn</option>
               </select>
             </div>
 
             <div className="col-span-2">
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Anh dai dien (URL)</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Ảnh đại diện (URL)</label>
               <input
                 value={form.thumbnail}
                 onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
@@ -211,21 +211,21 @@ function ProductModal({ product, categories, onClose, onSave }: {
             </div>
 
             <div className="col-span-2">
-              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Mo ta</label>
+              <label className="mb-1.5 block text-xs font-medium text-[#64748B]">Mô tả</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
                 className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white placeholder:text-[#475569] focus:border-[#3B82F6] focus:outline-none resize-none"
-                placeholder="Mo ta san pham..."
+                placeholder="Mô tả sản phẩm..."
               />
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Huy</Button>
+            <Button type="button" variant="outline" onClick={onClose}>Hủy</Button>
             <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (product ? "Luu thay doi" : "Tao san pham")}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (product ? "Lưu thay đổi" : "Tạo sản phẩm")}
             </Button>
           </div>
         </form>
@@ -303,7 +303,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
     }
 
     if (accountsParsed.length === 0) {
-      setImportResult({ ok: 0, skip, error: "Khong co tai khoan hop le trong file" });
+      setImportResult({ ok: 0, skip, error: "Không có tài khoản hợp lệ trong file" });
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -320,10 +320,10 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
         setImportResult({ ok: data.count || accountsParsed.length, skip, error: "" });
         fetchAccounts();
       } else {
-        setImportResult({ ok: 0, skip, error: data.error || "Loi khi import" });
+        setImportResult({ ok: 0, skip, error: data.error || "Lỗi khi import" });
       }
     } catch {
-      setImportResult({ ok: 0, skip, error: "Loi ket noi" });
+      setImportResult({ ok: 0, skip, error: "Lỗi kết nối" });
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -331,7 +331,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xoa tai khoan nay?")) return;
+    if (!confirm("Xóa tài khoản này?")) return;
     setDeletingId(id);
     try {
       await fetch(`/api/admin/accounts?id=${id}`, { method: "DELETE" });
@@ -354,8 +354,8 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
       <div className="w-full max-w-2xl rounded-[16px] border border-[#1E293B] bg-[#0F172A] max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between border-b border-[#1E293B] p-5 shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-white">Quan ly tai khoan</h2>
-            <p className="text-sm text-[#64748B]">{product.name} — {availableCount} san sang</p>
+            <h2 className="text-lg font-bold text-white">Quản lý tài khoản</h2>
+            <p className="text-sm text-[#64748B]">{product.name} — {availableCount} sản sẵn sàng</p>
           </div>
           <button onClick={onClose} className="rounded-[8px] p-1 text-[#64748B] hover:bg-[#1E293B] hover:text-white">
             <X className="h-5 w-5" />
@@ -365,7 +365,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
         <div className="p-5 shrink-0 border-b border-[#1E293B]">
           {importResult && (
             <div className={`rounded-[8px] px-3 py-2 text-sm mb-3 ${importResult.error ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-green-500/10 text-green-400 border border-green-500/20"}`}>
-              {importResult.error || `Import thanh cong ${importResult.ok} tai khoan${importResult.skip > 0 ? `, ${importResult.skip} dong bi bo qua` : ""}`}
+              {importResult.error || `Import thành công ${importResult.ok} tài khoản${importResult.skip > 0 ? `, ${importResult.skip} dòng bị bỏ qua` : ""}`}
             </div>
           )}
           <div className="flex items-center gap-2 mb-3">
@@ -379,7 +379,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
             <input
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
-              placeholder="Mat khau"
+              placeholder="Mật khẩu"
               className="flex-1 rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2 text-sm text-white placeholder:text-[#475569] focus:border-[#3B82F6] focus:outline-none"
               disabled={saving || importing}
             />
@@ -403,7 +403,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
               {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
               Import file TXT
             </button>
-            <span className="text-xs text-[#475569]">Dinh dang: Tài Khoản|Mật Khẩu (moi dong 1 tai khoan)</span>
+            <span className="text-xs text-[#475569]">Định dạng: Tài Khoản|Mật Khẩu (mỗi dòng 1 tài khoản)</span>
           </div>
         </div>
 
@@ -415,8 +415,8 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
           ) : accounts.length === 0 ? (
             <div className="text-center py-8">
               <KeyRound className="h-10 w-10 text-[#334155] mx-auto mb-2" />
-              <p className="text-sm text-[#64748B]">Chua co tai khoan nao</p>
-              <p className="text-xs text-[#475569] mt-1">Them tai khoan ben tren de ban</p>
+              <p className="text-sm text-[#64748B]">Chưa có tài khoản nào</p>
+              <p className="text-xs text-[#475569] mt-1">Thêm tài khoản bên trên để bán</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -451,7 +451,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
                       onClick={() => handleDelete(acc.id)}
                       disabled={deletingId === acc.id}
                       className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20 shrink-0"
-                      title="Xoa"
+                      title="Xóa"
                     >
                       {deletingId === acc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     </button>
@@ -465,7 +465,7 @@ function AccountInventoryModal({ product, onClose }: { product: Product; onClose
         </div>
 
         <div className="border-t border-[#1E293B] p-5 shrink-0">
-          <Button variant="outline" className="w-full" onClick={onClose}>Dong</Button>
+          <Button variant="outline" className="w-full" onClick={onClose}>Đóng</Button>
         </div>
       </div>
     </div>
@@ -486,11 +486,11 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/admin/products");
-      if (!res.ok) throw new Error("Khong the tai san pham");
+      if (!res.ok) throw new Error("Không thể tải sản phẩm");
       const data = await res.json();
       setProducts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Loi khi tai du lieu");
+      setError(err instanceof Error ? err.message : "Lỗi khi tải dữ liệu");
     }
   };
 
@@ -511,13 +511,13 @@ export default function AdminProductsPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Ban co chan chan muon xoa san pham nay?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
     setDeletingId(id);
     try {
       await fetch(`/api/admin/products?id=${id}`, { method: "DELETE" });
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch {
-      alert("Loi khi xoa");
+      alert("Lỗi khi xóa");
     } finally {
       setDeletingId(null);
     }
@@ -535,18 +535,18 @@ export default function AdminProductsPage() {
         <div className="border-b border-[#1E293B] bg-[#0F172A] px-6 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-sora text-xl font-bold text-white">San pham</h1>
-              <p className="text-sm text-[#64748B]">{products.length} san pham</p>
+              <h1 className="font-sora text-xl font-bold text-white">Sản phẩm</h1>
+              <p className="text-sm text-[#64748B]">{products.length} sản phẩm</p>
             </div>
             <Button size="sm" onClick={() => { setEditing(undefined!); setShowModal(true); }}>
-              <Plus className="h-4 w-4" /> Them san pham
+              <Plus className="h-4 w-4" /> Thêm sản phẩm
             </Button>
           </div>
           <div className="relative mt-3 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748B]" />
             <input
               type="text"
-              placeholder="Tim kiem san pham..."
+              placeholder="Tìm kiếm sản phẩm..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-10 pl-10 pr-4 rounded-[12px] border border-[#1E293B] bg-[#111827] text-white text-sm placeholder:text-[#64748B] focus:border-[#3B82F6] focus:outline-none"
@@ -590,7 +590,7 @@ export default function AdminProductsPage() {
                   </div>
                   <CardContent className="p-3">
                     <h3 className="text-sm font-semibold text-white line-clamp-1 mb-0.5">{product.name}</h3>
-                    <p className="text-xs text-[#64748B] mb-2">{product.category?.name || "Khong phan loai"}</p>
+                    <p className="text-xs text-[#64748B] mb-2">{product.category?.name || "Không phân loại"}</p>
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-sora font-bold text-[#3B82F6]">{fmt(product.price)}</span>
                       <span className="text-xs text-[#64748B]">Con: {product.stock}</span>
@@ -631,11 +631,11 @@ export default function AdminProductsPage() {
             <div className="flex flex-col items-center justify-center py-16">
               <Image className="h-12 w-12 text-[#334155] mb-3" />
               <p className="text-[#64748B]">
-                {search ? "Khong tim thay san pham nao" : "Chua co san pham nao"}
+                {search ? "Không tìm thấy sản phẩm nào" : "Chưa có sản phẩm nào"}
               </p>
               {!search && (
                 <Button className="mt-4" size="sm" onClick={() => { setEditing(undefined!); setShowModal(true); }}>
-                  <Plus className="h-4 w-4" /> Them san pham dau tien
+                  <Plus className="h-4 w-4" /> Thêm sản phẩm đầu tiên
                 </Button>
               )}
             </div>

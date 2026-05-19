@@ -11,7 +11,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: "Chua dang nhap" }, { status: 401 });
+      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -26,11 +26,11 @@ export async function GET(
     });
 
     if (!order) {
-      return NextResponse.json({ error: "Khong tim thay don hang" }, { status: 404 });
+      return NextResponse.json({ error: "Không tìm thấy đơn hàng" }, { status: 404 });
     }
 
     if (order.userId !== session.user.id && session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen truy cap" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
     }
 
     return NextResponse.json({
@@ -49,6 +49,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Order GET error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

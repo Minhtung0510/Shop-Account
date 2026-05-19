@@ -20,6 +20,8 @@ export async function GET() {
         role: true,
         balance: true,
         rank: true,
+        isLocked: true,
+        lockedAt: true,
         createdAt: true,
         _count: { select: { orders: true } },
       },
@@ -34,6 +36,8 @@ export async function GET() {
       role: user.role,
       balance: user.balance,
       rank: user.rank,
+      isLocked: user.isLocked,
+      lockedAt: user.lockedAt ? new Date(user.lockedAt).toLocaleDateString("vi-VN") : null,
       orders: user._count.orders,
       created: new Date(user.createdAt).toLocaleDateString("vi-VN"),
     }));
@@ -53,7 +57,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, username, email, phone, role, balance, rank } = body;
+    const { id, username, email, phone, role, balance, rank, isLocked } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu ID" }, { status: 400 });
@@ -71,12 +75,44 @@ export async function PUT(req: NextRequest) {
     if (role !== undefined) updateData.role = role;
     if (balance !== undefined) updateData.balance = balance;
     if (rank !== undefined) updateData.rank = rank;
+    if (isLocked !== undefined) {
+      updateData.isLocked = isLocked;
+      updateData.lockedAt = isLocked ? new Date() : null;
+    }
 
     await db.user.update({ where: { id }, data: updateData });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Update user error:", error);
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Thiếu ID" }, { status: 400 });
+    }
+
+    const existing = await db.user.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
+    }
+
+    await db.user.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete user error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

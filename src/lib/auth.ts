@@ -46,6 +46,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        if (user.isLocked) {
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -60,7 +64,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/login",
-    error: "/login",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -71,12 +74,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.id) {
         const dbUser = await db.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, balance: true, rank: true },
+          select: { role: true, balance: true, rank: true, isLocked: true },
         });
         if (dbUser) {
           token.role = dbUser.role;
           token.balance = dbUser.balance;
           token.rank = dbUser.rank;
+          token.isLocked = dbUser.isLocked;
         }
       }
       return token;
@@ -87,6 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string;
         session.user.balance = token.balance as number;
         session.user.rank = token.rank as string;
+        (session.user as any).isLocked = token.isLocked as boolean;
       }
       return session;
     },

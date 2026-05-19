@@ -33,7 +33,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setErrors({ form: "Email hoặc mật khẩu không đúng" });
+        setErrors({ form: "Email hoặc mật khẩu không đúng hoặc tài khoản đã bị khoá" });
         setLoading(false);
         return;
       }

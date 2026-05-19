@@ -19,7 +19,7 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen truy cap" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
     }
 
     const products = await db.product.findMany({
@@ -47,7 +47,7 @@ export async function GET() {
     return NextResponse.json(synced);
   } catch (error) {
     console.error("Admin products API error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }
 

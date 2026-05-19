@@ -223,31 +223,31 @@ export async function POST(request: Request) {
 
       sendEmailFn(
         ADMIN_EMAIL,
-        `[Don Hang] ${user.username} - ${fmt(totalAmount)}`,
+        `[Đơn Hàng] ${user.username} - ${fmt(totalAmount)}`,
         `
           <div style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
             <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px;">
-              <h2 style="color: #3B82F6; margin-bottom: 20px;">Don hang moi tu Shop Account</h2>
+              <h2 style="color: #3B82F6; margin-bottom: 20px;">Đơn hàng mới từ Shop Account</h2>
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Khach hang</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Khách hàng</td>
                   <td style="padding: 10px; border-bottom: 1px solid #eee;">${user.username} (${user.email})</td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Ma don</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Mã đơn</td>
                   <td style="padding: 10px; border-bottom: 1px solid #eee;">${order.id}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Tong tien</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Tổng tiền</td>
                   <td style="padding: 10px; border-bottom: 1px solid #eee; color: #3B82F6; font-weight: bold;">${fmt(totalAmount)}</td>
                 </tr>
                 ${orderItemsHtml}
                 <tr>
-                  <td style="padding: 10px; font-weight: bold;">Thoi gian</td>
+                  <td style="padding: 10px; font-weight: bold;">Thời gian</td>
                   <td style="padding: 10px;">${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
                 </tr>
               </table>
-              <p style="margin-top: 20px; color: #666; font-size: 12px;">Tu dong gui tu Shop Account</p>
+              <p style="margin-top: 20px; color: #666; font-size: 12px;">Tự động gửi từ Shop Account</p>
             </div>
           </div>
         `
@@ -299,25 +299,25 @@ async function sendPurchaseEmail(
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; color: #111; font-size: 15px; line-height: 1.6;">
-      <h1 style="font-size: 22px; font-weight: 600; margin: 0 0 24px; color: #111;">Thanh toan thanh cong</h1>
+      <h1 style="font-size: 22px; font-weight: 600; margin: 0 0 24px; color: #111;">Thanh toán thành công</h1>
 
-      <p style="margin: 0 0 20px; color: #555;">Cam on ban da mua hang. Chi tiet don hang:</p>
+      <p style="margin: 0 0 20px; color: #555;">Cảm ơn bạn đã mua hàng. Chi tiết đơn hàng:</p>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
         <tr>
-          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Ma don</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Mã đơn</td>
           <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right; font-weight: 500;">${orderId.slice(-8).toUpperCase()}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Khach hang</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Khách hàng</td>
           <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">${user.username}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Thoi gian</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;">Thời gian</td>
           <td style="padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;">${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td>
         </tr>
         <tr>
-          <td style="padding: 8px 0; font-weight: 600; color: #111;">Tong tien</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #111;">Tổng tiền</td>
           <td style="padding: 8px 0; text-align: right; font-weight: 600;">${fmt(orderItemsData.reduce((sum, i) => sum + i.price * i.quantity, 0))}</td>
         </tr>
       </table>
@@ -325,25 +325,25 @@ async function sendPurchaseEmail(
       ${
         accountsHtml
           ? `
-      <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px; color: #111;">Tai khoan cua ban</h2>
-      <p style="margin: 0 0 16px; font-size: 13px; color: #666;">Doi mat khau ngay sau khi dang nhap de bao mat tai khoan.</p>
+      <h2 style="font-size: 16px; font-weight: 600; margin: 0 0 12px; color: #111;">Tài khoản của bạn</h2>
+      <p style="margin: 0 0 16px; font-size: 13px; color: #666;">Đổi mật khẩu ngay sau khi đăng nhập để bảo mật tài khoản.</p>
       <div style="border: 1px solid #ddd; padding: 16px; margin-bottom: 24px;">
         ${accountsHtml}
       </div>
       `
           : `
-      <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #111;">Tai khoan dang xu ly</p>
-      <p style="margin: 0 0 24px; font-size: 13px; color: #666;">Tai khoan se duoc gui qua email trong 24 gio.</p>
+      <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #111;">Tài khoản đang xử lý</p>
+      <p style="margin: 0 0 24px; font-size: 13px; color: #666;">Tài khoản sẽ được gửi qua email trong 24 giờ.</p>
       `
       }
 
-      <p style="margin: 0; font-size: 12px; color: #999;">Tu dong gui tu Shop Account</p>
+      <p style="margin: 0; font-size: 12px; color: #999;">Tự động gửi từ Shop Account</p>
     </div>
   `;
 
   await sendEmailFn(
     user.email,
-    `Thanh toan thanh cong - Don ${orderId.slice(-8).toUpperCase()}`,
+    `Thanh toán thành công - Đơn ${orderId.slice(-8).toUpperCase()}`,
     html
   );
 }

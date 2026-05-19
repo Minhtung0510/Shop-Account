@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(accounts);
   } catch (error) {
     console.error("Accounts GET error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }
 
@@ -42,14 +42,14 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const body = await req.json();
     const { productId, accounts } = body;
 
     if (!productId || !accounts || !Array.isArray(accounts) || accounts.length === 0) {
-      return NextResponse.json({ error: "Thieu thong tin" }, { status: 400 });
+      return NextResponse.json({ error: "Thiếu thông tin" }, { status: 400 });
     }
 
     const created = await db.accountInventory.createMany({
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, count: created.count });
   } catch (error) {
     console.error("Accounts POST error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }
 
@@ -77,23 +77,23 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ error: "Thieu ID" }, { status: 400 });
+      return NextResponse.json({ error: "Thiếu ID" }, { status: 400 });
     }
 
     const account = await db.accountInventory.findUnique({ where: { id } });
     if (!account) {
-      return NextResponse.json({ error: "Khong tim thay" }, { status: 404 });
+      return NextResponse.json({ error: "Không tìm thấy" }, { status: 404 });
     }
 
     if (account.status === "SOLD") {
-      return NextResponse.json({ error: "Tai khoan da ban, khong the xoa" }, { status: 400 });
+      return NextResponse.json({ error: "Tài khoản đã bán, không thể xóa" }, { status: 400 });
     }
 
     await db.accountInventory.delete({ where: { id } });
@@ -106,6 +106,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Accounts DELETE error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const COMPLETED_STATUSES = ["SUCCESS", "COMPLETED", "FAILED", "REFUNDED"];
@@ -30,6 +30,6 @@ export async function GET() {
       warrantyCount,
     });
   } catch {
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

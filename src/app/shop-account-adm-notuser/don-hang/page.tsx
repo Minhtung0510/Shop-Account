@@ -4,9 +4,10 @@ import { useState } from "react";
 import { AdminSidebar } from "@/components/shared/admin-sidebar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAdminOrders, useUpdateOrderStatus } from "@/hooks/useAdmin";
+import type { AdminOrder } from "@/hooks/useAdmin";
 
 const statusConfig: Record<string, { className: string; label: string }> = {
   SUCCESS: { className: "bg-[#22C55E]/20 text-[#22C55E]", label: "Thành công" },
@@ -28,6 +29,7 @@ const statusBorderClass: Record<string, string> = {
 
 export default function AdminOrdersPage() {
   const [filter, setFilter] = useState("all");
+  const [viewingOrder, setViewingOrder] = useState<AdminOrder | null>(null);
   const { data: orders = [], isLoading, error, refetch } = useAdminOrders();
   const updateStatus = useUpdateOrderStatus();
 
@@ -137,18 +139,27 @@ export default function AdminOrdersPage() {
                             <span className="text-sm text-[#64748B]">{order.date}</span>
                           </td>
                           <td className="px-4 py-3">
-                            <select
-                              value={order.status}
-                              onChange={(e) => handleStatusChange(order.id, order.type, e.target.value)}
-                              disabled={updateStatus.isPending}
-                              className={`h-7 rounded-[6px] border text-xs px-2 font-medium bg-transparent focus:outline-none cursor-pointer ${borderClass}`}
-                            >
-                              <option value="PENDING">Chờ</option>
-                              <option value="PROCESSING">Đang xử lý</option>
-                              <option value="SUCCESS">Thành công</option>
-                              <option value="FAILED">Thất bại</option>
-                              <option value="REFUNDED">Hoàn tiền</option>
-                            </select>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setViewingOrder(order)}
+                                className="flex h-7 w-7 items-center justify-center rounded-[6px] text-[#94A3B8] hover:bg-[#1F2937] hover:text-white transition-colors"
+                                title="Xem chi tiết"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <select
+                                value={order.status}
+                                onChange={(e) => handleStatusChange(order.id, order.type, e.target.value)}
+                                disabled={updateStatus.isPending}
+                                className={`h-7 rounded-[6px] border text-xs px-2 font-medium bg-transparent focus:outline-none cursor-pointer ${borderClass}`}
+                              >
+                                <option value="PENDING">Chờ</option>
+                                <option value="PROCESSING">Đang xử lý</option>
+                                <option value="SUCCESS">Thành công</option>
+                                <option value="FAILED">Thất bại</option>
+                                <option value="REFUNDED">Hoàn tiền</option>
+                              </select>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -163,6 +174,102 @@ export default function AdminOrdersPage() {
           </Card>
         </div>
       </div>
+
+      {viewingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-[16px] border border-[#1E293B] bg-[#0F172A] max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-[#1E293B] p-5 shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-white">Chi tiết đơn hàng</h2>
+                <p className="text-xs text-[#64748B] font-mono">#{viewingOrder.id.slice(-8).toUpperCase()}</p>
+              </div>
+              <button onClick={() => setViewingOrder(null)} className="rounded-[8px] p-1 text-[#64748B] hover:bg-[#1E293B] hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                  <p className="text-xs text-[#64748B] mb-1">Khách hàng</p>
+                  <p className="text-sm font-medium text-white">{viewingOrder.user?.username || "N/A"}</p>
+                  <p className="text-xs text-[#64748B]">{viewingOrder.user?.email || ""}</p>
+                </div>
+                <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                  <p className="text-xs text-[#64748B] mb-1">Loại đơn</p>
+                  <Badge className={`text-xs ${viewingOrder.type === "SERVICE" ? "bg-purple-500/20 text-purple-400" : "bg-blue-500/20 text-blue-400"}`}>
+                    {viewingOrder.type === "SERVICE" ? "Dịch vụ" : "Sản phẩm"}
+                  </Badge>
+                </div>
+                <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                  <p className="text-xs text-[#64748B] mb-1">Tong tien</p>
+                  <p className="text-sm font-bold text-[#3B82F6]">{formatCurrency(viewingOrder.price)}</p>
+                </div>
+                <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                  <p className="text-xs text-[#64748B] mb-1">Trạng thái</p>
+                  <Badge className={`text-xs ${statusConfig[viewingOrder.status]?.className || "bg-slate-500/20 text-slate-400"}`}>
+                    {statusConfig[viewingOrder.status]?.label || viewingOrder.status}
+                  </Badge>
+                </div>
+                <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                  <p className="text-xs text-[#64748B] mb-1">Ngay dat</p>
+                  <p className="text-sm text-white">{viewingOrder.date}</p>
+                </div>
+                {viewingOrder.type === "SERVICE" && (
+                  <>
+                    {viewingOrder.phone && (
+                      <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                        <p className="text-xs text-[#64748B] mb-1">Số điện thoại</p>
+                        <p className="text-sm text-white">{viewingOrder.phone}</p>
+                      </div>
+                    )}
+                    {viewingOrder.telegram && (
+                      <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                        <p className="text-xs text-[#64748B] mb-1">Telegram</p>
+                        <p className="text-sm text-white">{viewingOrder.telegram}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {viewingOrder.type === "PRODUCT" && viewingOrder.orderItems && (
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-2">Sản phẩm</h3>
+                  <div className="space-y-2">
+                    {viewingOrder.orderItems.map((item, idx) => (
+                      <div key={idx} className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-white">{item.productName}</p>
+                            <p className="text-xs text-[#64748B]">So luong: {item.quantity}</p>
+                          </div>
+                          <p className="text-sm font-bold text-[#94A3B8]">{formatCurrency(item.price)}</p>
+                        </div>
+                        {item.accountData && (
+                          <div className="mt-2 rounded-[8px] bg-green-500/10 border border-green-500/20 p-2">
+                            <p className="text-xs text-green-400 font-medium mb-1">Tài khoản:</p>
+                            <p className="text-xs text-green-300 font-mono whitespace-pre-wrap">{item.accountData}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingOrder.type === "SERVICE" && (
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-2">Dịch vụ</h3>
+                  <div className="rounded-[10px] border border-[#1E293B] bg-[#111827] p-3">
+                    <p className="text-sm font-medium text-white">{viewingOrder.product}</p>
+                    <p className="text-xs text-[#64748B] mt-1">Gia: {formatCurrency(viewingOrder.price)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

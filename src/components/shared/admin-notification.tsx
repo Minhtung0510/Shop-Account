@@ -74,22 +74,22 @@ function Toast({ notif, onClose }: { notif: Notification; onClose: () => void })
               ? "bg-green-500/20 text-green-400"
               : "bg-blue-500/20 text-blue-400"
           }`}>
-            {notif.type === "SERVICE" ? "DICH VU" : notif.type === "TOPUP" ? "NAP TIEN" : "SAN PHAM"}
+            {notif.type === "SERVICE" ? "DỊCH VỤ" : notif.type === "TOPUP" ? "NẠP TIỀN" : "SẢN PHẨM"}
           </span>
           <span className="rounded-[6px] bg-green-500/20 px-2 py-0.5 text-[10px] font-bold text-green-400">
-            MOI
+            MỚI
           </span>
         </div>
         <p className="mt-1 text-sm font-semibold text-white">
           {notif.type === "SERVICE" ? notif.serviceName :
-           notif.type === "TOPUP" ? "Yeu cau nap tien" : "Don hang moi"}
+           notif.type === "TOPUP" ? "Yêu cầu nạp tiền" : "Đơn hàng mới"}
         </p>
         <p className="text-xs text-[#64748B]">
-          Khach hang: <span className="text-[#94A3B8]">{notif.user}</span>
+          Khách hàng: <span className="text-[#94A3B8]">{notif.user}</span>
         </p>
         {notif.type === "TOPUP" && notif.transferContent ? (
           <p className="text-xs font-mono text-[#F59E0B]">
-            Noi dung: <span className="font-bold">{notif.transferContent}</span>
+            Nội dung: <span className="font-bold">{notif.transferContent}</span>
           </p>
         ) : null}
         <p className="text-sm font-bold text-[#3B82F6]">{fmt(notif.amount)}</p>

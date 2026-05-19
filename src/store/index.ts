@@ -125,3 +125,65 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 }));
+
+export interface PublicSettings {
+  store_name: string;
+  store_email: string;
+  store_hotline: string;
+  bank_name: string;
+  bank_bin: string;
+  bank_account_number: string;
+  bank_account_name: string;
+  bank_qr_image: string;
+  momo_account_number: string;
+  momo_account_name: string;
+  momo_qr_image: string;
+  telegram: string;
+  zalo: string;
+  facebook: string;
+  description: string;
+  keywords: string;
+  facebook_pixel: string;
+  google_analytics: string;
+}
+
+interface SettingsStore {
+  settings: PublicSettings;
+  setSettings: (s: PublicSettings) => void;
+  fetchSettings: () => Promise<void>;
+}
+
+export const useSettingsStore = create<SettingsStore>((set) => ({
+  settings: {
+    store_name: "ShopAccount",
+    store_email: "support@shopaccount.vn",
+    store_hotline: "0901 234 567",
+    bank_name: "TP Bank",
+    bank_bin: "970423",
+    bank_account_number: "07553046301",
+    bank_account_name: "NGUYEN MINH TUNG",
+    bank_qr_image: "",
+    momo_account_number: "",
+    momo_account_name: "",
+    momo_qr_image: "",
+    telegram: "",
+    zalo: "",
+    facebook: "",
+    description: "",
+    keywords: "",
+    facebook_pixel: "",
+    google_analytics: "",
+  },
+  setSettings: (s) => set({ settings: s }),
+  fetchSettings: async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        set({ settings: data as PublicSettings });
+      }
+    } catch {
+      // ignore
+    }
+  },
+}));

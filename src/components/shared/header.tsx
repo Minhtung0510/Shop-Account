@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useCartStore, useUIStore, useUserStore } from "@/store";
+import { useCartStore, useUIStore, useUserStore, useSettingsStore } from "@/store";
+import { usePublicSettings } from "@/hooks/usePublicSettings";
 
 type NavItem = {
   href: string;
@@ -55,6 +56,8 @@ export function Header() {
   const fetchUser = useUserStore((s) => s.fetchUser);
   const cartItemCount = useCartStore((s) => s.getItemCount());
   const openCart = useUIStore((s) => s.openCart);
+  const settings = useSettingsStore((s) => s.settings);
+  usePublicSettings();
 
   useEffect(() => {
     setMounted(true);
@@ -81,9 +84,20 @@ export function Header() {
               <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
                 <ShoppingCart className="h-5 w-5 text-white" />
               </div>
-              <span className="font-sora text-xl font-bold text-white">
-                Shop<span className="gradient-text">Account</span>
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="font-sora text-xl font-bold text-white">
+                  {settings.store_name || "ShopAccount"}
+                </span>
+                {settings.store_hotline && (
+                  <a
+                    href={`tel:${settings.store_hotline.replace(/\s/g, "")}`}
+                    className="hidden xl:flex items-center gap-1.5 rounded-[8px] border border-[#1E293B] bg-[#111827] px-2.5 py-1 text-xs text-[#94A3B8] hover:border-[#3B82F6] hover:text-white transition-all"
+                  >
+                    <span>📞</span>
+                    <span className="font-medium">{settings.store_hotline}</span>
+                  </a>
+                )}
+              </div>
             </Link>
 
             {/* Desktop Nav */}

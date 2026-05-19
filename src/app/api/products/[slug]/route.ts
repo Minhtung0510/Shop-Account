@@ -19,7 +19,7 @@ export async function GET(
     });
 
     if (!product) {
-      return NextResponse.json({ error: "Khong tim thay san pham" }, { status: 404 });
+      return NextResponse.json({ error: "Không tìm thấy sản phẩm" }, { status: 404 });
     }
 
     let parsedImages: string[] = [];

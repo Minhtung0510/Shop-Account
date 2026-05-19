@@ -141,7 +141,7 @@ export default function AdminTopupPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#1E293B]">
-                      {["Ma GD", "Nguoi dung", "Ngan hang", "So tien", "Noi dung CK", "Trang thai", "Ngay", "Thao tac"].map((h) => (
+                      {["Mã GD", "Người dùng", "Ngân hàng", "Số tiền", "Nội dung CK", "Trạng thái", "Ngày", "Thao tác"].map((h) => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-medium text-[#64748B] uppercase">{h}</th>
                       ))}
                     </tr>
@@ -178,7 +178,7 @@ export default function AdminTopupPage() {
                                   onClick={() => handleAction(t.id, "approve")}
                                   disabled={processingId === t.id}
                                   className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#22C55E] hover:bg-[#22C55E]/10 disabled:opacity-50"
-                                  title="Duyet"
+                                  title="Duyệt"
                                 >
                                   {processingId === t.id ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -190,7 +190,7 @@ export default function AdminTopupPage() {
                                   onClick={() => handleAction(t.id, "reject")}
                                   disabled={processingId === t.id}
                                   className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#EF4444] hover:bg-[#EF4444]/10 disabled:opacity-50"
-                                  title="Tu choi"
+                                  title="Từ chối"
                                 >
                                   <XCircle className="h-4 w-4" />
                                 </button>
@@ -212,8 +212,8 @@ export default function AdminTopupPage() {
                     <Clock className="h-10 w-10 text-[#334155] mb-3" />
                     <p className="text-[#64748B]">
                       {search || statusFilter !== "ALL"
-                        ? "Khong tim thay yeu cau nao"
-                        : "Chua co yeu cau nap tien nao"}
+                        ? "Không tìm thấy yêu cầu nào"
+                        : "Chưa có yêu cầu nạp tiền nào"}
                     </p>
                   </div>
                 )}

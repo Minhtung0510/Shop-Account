@@ -15,6 +15,14 @@ export interface AdminOrder {
   date: string;
   createdAt: string;
   user?: { username: string; email: string };
+  orderItems?: Array<{
+    productName: string;
+    quantity: number;
+    price: number;
+    accountData: string | null;
+  }>;
+  phone?: string;
+  telegram?: string;
 }
 
 export interface AdminWarranty {
@@ -30,21 +38,38 @@ export interface AdminWarranty {
   user: { username: string; email: string };
 }
 
-export interface AdminAccount {
+export interface AdminUser {
   id: string;
-  username: string;
+  name: string;
   email: string;
-  role: string;
+  phone: string;
+  role: "USER" | "ADMIN";
   balance: number;
   rank: string;
+  orders: number;
+  isLocked: boolean;
+  lockedAt: string | null;
+  created: string;
+}
+
+export interface AdminAccount {
+  id: string;
+  productId: string;
+  email: string;
+  password: string;
+  status: string;
   createdAt: string;
 }
 
 export interface AdminStats {
   totalUsers: number;
-  totalProducts: number;
-  totalRevenue: number;
   totalOrders: number;
+  monthlyRevenue: number;
+  todayOrders: number;
+  usersChange: number;
+  ordersChange: number;
+  revenueChange: number;
+  todayOrdersChange: number;
 }
 
 export interface OrderCount {
@@ -52,11 +77,100 @@ export interface OrderCount {
   warrantyCount: number;
 }
 
+// ---- Settings ----
+
+export interface SettingsMap {
+  [key: string]: string;
+}
+
+export function useAdminSettings() {
+  return useQuery<SettingsMap>({
+    queryKey: [...ADMIN_KEY, "settings"],
+    queryFn: () =>
+      fetch("/api/admin/settings")
+        .then((r) => {
+          if (!r.ok) throw new Error("Fetch failed");
+          return r.json();
+        }),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useUpdateSetting() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { key: string; value: string }) =>
+      fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).then((r) => {
+        if (!r.ok) throw new Error("Update failed");
+        return r.json();
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "settings"] });
+    },
+  });
+}
+
 // ---- Shared query keys ----
 
 const ADMIN_KEY = ["admin"] as const;
 const USER_ORDERS_KEY = ["user", "orders"] as const;
 const USER_ME_KEY = ["user", "me"] as const;
+
+// ---- Users ----
+
+export function useAdminUsers() {
+  return useQuery<AdminUser[]>({
+    queryKey: [...ADMIN_KEY, "users"],
+    queryFn: () =>
+      fetch("/api/admin/users")
+        .then((r) => {
+          if (!r.ok) throw new Error("Fetch failed");
+          return r.json();
+        }),
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }).then((r) => {
+        if (!r.ok) throw new Error("Update failed");
+        return r.json();
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "users"] });
+      qc.invalidateQueries({ queryKey: USER_ME_KEY });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/admin/users?id=${id}`, { method: "DELETE" }).then((r) => {
+        if (!r.ok) throw new Error("Delete failed");
+        return r.json();
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "users"] });
+    },
+  });
+}
 
 // ---- Orders ----
 
@@ -162,7 +276,10 @@ export function useUpdateAccountBalance() {
 export function useAdminStats() {
   return useQuery<AdminStats>({
     queryKey: [...ADMIN_KEY, "stats"],
-    queryFn: () => fetch("/api/admin/stats").then((r) => r.json()),
+    queryFn: () =>
+      fetch("/api/admin/dashboard")
+        .then((r) => r.json())
+        .then((data) => data.stats),
     refetchOnWindowFocus: true,
     staleTime: 60 * 1000,
   });

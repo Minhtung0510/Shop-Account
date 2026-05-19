@@ -130,7 +130,7 @@ async function main() {
       create: {
         name: p.name,
         slug: p.slug,
-        description: `Tai khoan ${p.name} chat luong cao, giao tu dong ngay sau thanh toan.`,
+        description: `Tài khoản ${p.name} chất lượng cao, giao tự động ngay sau thanh toán.`,
         price: p.price,
         originalPrice: p.originalPrice || null,
         categoryId: cat.id,
@@ -174,6 +174,33 @@ async function main() {
     });
   }
   console.log(`${services.length} services created`);
+
+  // Create default settings
+  const defaultSettings = [
+    { key: "store_name", value: "ShopAccount" },
+    { key: "store_email", value: "support@shopaccount.vn" },
+    { key: "store_hotline", value: "0901 234 567" },
+    { key: "bank_name", value: "Vietcombank" },
+    { key: "bank_account_number", value: "1234567890" },
+    { key: "bank_account_name", value: "SHOP ACCOUNT" },
+    { key: "bank_qr_image", value: "" },
+    { key: "telegram", value: "" },
+    { key: "zalo", value: "" },
+    { key: "facebook", value: "" },
+    { key: "description", value: "Hệ thống bán tài khoản & dịch vụ online tự động." },
+    { key: "keywords", value: "mua tai khoan, ban tai khoan online, netflix, spotify, canva pro" },
+    { key: "facebook_pixel", value: "" },
+    { key: "google_analytics", value: "" },
+  ];
+
+  for (const s of defaultSettings) {
+    await db.setting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: s,
+    });
+  }
+  console.log(`${defaultSettings.length} default settings created`);
 
   console.log("Seed completed!");
 }

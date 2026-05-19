@@ -36,6 +36,12 @@ export async function GET() {
       date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
       createdAt: order.createdAt.toISOString(),
       user: order.user,
+      orderItems: order.orderItems.map((item) => ({
+        productName: item.product?.name || "Unknown",
+        quantity: item.quantity,
+        price: item.price,
+        accountData: item.accountData,
+      })),
     }));
 
     const formattedServiceOrders = serviceOrders.map((so) => ({
@@ -47,6 +53,8 @@ export async function GET() {
       date: new Date(so.createdAt).toLocaleDateString("vi-VN"),
       createdAt: so.createdAt.toISOString(),
       user: so.user,
+      phone: so.phone,
+      telegram: so.telegram,
     }));
 
     const all = [...formattedOrders, ...formattedServiceOrders].sort(
@@ -64,14 +72,14 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Khong co quyen" }, { status: 403 });
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const body = await req.json();
     const { id, type, status } = body;
 
     if (!id || !type || !status) {
-      return NextResponse.json({ error: "Thieu thong tin" }, { status: 400 });
+      return NextResponse.json({ error: "Thiếu thông tin" }, { status: 400 });
     }
 
     if (type === "PRODUCT") {
@@ -89,6 +97,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Update order status error:", error);
-    return NextResponse.json({ error: "Loi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }
 }

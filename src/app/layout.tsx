@@ -4,13 +4,31 @@ import { ToastProvider } from "@/components/providers/toast-provider";
 import { Header } from "@/components/shared/header";
 import { Footer } from "@/components/shared/footer";
 import { CartDrawer } from "@/components/shared/cart-drawer";
+import { db } from "@/lib/db";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "ShopAccount - Hệ thống bán tài khoản & dịch vụ online",
-  description: "Mua tài khoản nhanh chóng - thanh toán tự động - hỗ trợ 24/7",
-  keywords: ["mua tai khoan", "ban tai khoan online", "netflix", "spotify", "canva pro"],
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const settings = await db.setting.findMany();
+    const map: Record<string, string> = {};
+    for (const s of settings) {
+      map[s.key] = s.value;
+    }
+    return {
+      title: map.store_name ? `${map.store_name} - Hệ thống bán tài khoản & dịch vụ` : "ShopAccount",
+      description: map.description || "Mua tài khoản nhanh chóng - thanh toán tự động - hỗ trợ 24/7",
+      keywords: map.keywords ? map.keywords.split(",").map((k) => k.trim()) : ["mua tai khoan", "ban tai khoan online"],
+    };
+  } catch {
+    return {
+      title: "ShopAccount - Hệ thống bán tài khoản & dịch vụ online",
+      description: "Mua tài khoản nhanh chóng - thanh toán tự động - hỗ trợ 24/7",
+      keywords: ["mua tai khoan", "ban tai khoan online", "netflix", "spotify", "canva pro"],
+    };
+  }
+}
 
 export default function RootLayout({
   children,
