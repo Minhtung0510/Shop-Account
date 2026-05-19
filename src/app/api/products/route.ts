@@ -51,10 +51,19 @@ export async function GET(request: Request) {
       db.product.count({ where }),
     ]);
 
-    const synced = products.map((p) => ({
-      ...p,
-      stock: p._count.accountInventory,
-    }));
+    const synced = products.map((p) => {
+      let parsedImages: string[] = [];
+      try {
+        parsedImages = JSON.parse(p.images || "[]");
+      } catch {
+        parsedImages = p.images ? [p.images] : [];
+      }
+      return {
+        ...p,
+        images: parsedImages,
+        stock: p._count.accountInventory,
+      };
+    });
 
     return NextResponse.json({
       items: synced,

@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { useServices } from "@/hooks/useData";
+import { useSession } from "@/hooks/useSession";
+import { useUserStore } from "@/store";
+import { OrderFormModal } from "@/components/order-form-modal";
 import {
   Globe,
   ArrowRight,
@@ -15,25 +20,37 @@ import {
 } from "lucide-react";
 
 type Service = {
-  id: string; name: string; icon: string; price: number;
-  description: string; category: string;
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  price: number;
+  description: string;
+  category: string;
 };
 
 export default function SocialServicesPage() {
-  const [allServices, setAllServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/services")
-      .then((res) => res.json())
-      .then((data) => { if (Array.isArray(data)) setAllServices(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { data: allServices = [] } = useServices();
+  const userFromStore = useUserStore((s) => s.user);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   const fbServices = allServices.filter((s) => s.category === "Facebook");
   const igServices = allServices.filter((s) => s.category === "Instagram");
   const ttServices = allServices.filter((s) => s.category === "TikTok");
+
+  const handleServiceClick = (service: Service) => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    if (!userFromStore || userFromStore.balance < service.price) {
+      router.push("/nap-tien");
+      return;
+    }
+    setSelectedService(service);
+  };
 
   const renderServiceCard = (service: Service, colorClass: string) => (
     <Card key={service.id} hover className="group cursor-pointer">
@@ -64,9 +81,9 @@ export default function SocialServicesPage() {
             size="sm"
             variant="outline"
             className="group-hover:gap-2"
-            onClick={() => window.location.href = "/lien-he"}
+            onClick={() => handleServiceClick(service)}
           >
-            Liên hệ
+            Đặt dịch vụ
             <ArrowRight className="h-3 w-3" />
           </Button>
         </div>
@@ -118,7 +135,7 @@ export default function SocialServicesPage() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(loading ? [] : fbServices).map((service) =>
+            {(fbServices || []).map((service) =>
               renderServiceCard(service, "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#1877F2] to-[#0D8BD9]")
             )}
           </div>
@@ -139,7 +156,7 @@ export default function SocialServicesPage() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(loading ? [] : igServices).map((service) =>
+            {(igServices || []).map((service) =>
               renderServiceCard(service, "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#E4405F] to-[#F77737]")
             )}
           </div>
@@ -160,7 +177,7 @@ export default function SocialServicesPage() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(loading ? [] : ttServices).map((service) =>
+            {(ttServices || []).map((service) =>
               renderServiceCard(service, "flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#000000] to-[#25F4EE]")
             )}
           </div>
@@ -181,6 +198,16 @@ export default function SocialServicesPage() {
           </Link>
         </div>
       </div>
+
+      {selectedService && userFromStore && (
+        <OrderFormModal
+          service={selectedService}
+          user={userFromStore}
+          onClose={() => setSelectedService(null)}
+          onRequireLogin={() => router.push("/login")}
+          onRequireNapTien={() => router.push("/nap-tien")}
+        />
+      )}
     </div>
   );
 }

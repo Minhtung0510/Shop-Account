@@ -22,7 +22,18 @@ export async function GET(
       return NextResponse.json({ error: "Khong tim thay san pham" }, { status: 404 });
     }
 
-    return NextResponse.json({ ...product, stock: product._count.accountInventory });
+    let parsedImages: string[] = [];
+    try {
+      parsedImages = JSON.parse(product.images || "[]");
+    } catch {
+      parsedImages = product.images ? [product.images] : [];
+    }
+
+    return NextResponse.json({
+      ...product,
+      images: parsedImages,
+      stock: product._count.accountInventory
+    });
   } catch {
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
   }

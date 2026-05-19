@@ -30,10 +30,19 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const synced = products.map((p) => ({
-      ...p,
-      stock: p._count.accountInventory,
-    }));
+    const synced = products.map((p) => {
+      let parsedImages: string[] = [];
+      try {
+        parsedImages = JSON.parse(p.images || "[]");
+      } catch {
+        parsedImages = p.images ? [p.images] : [];
+      }
+      return {
+        ...p,
+        images: parsedImages,
+        stock: p._count.accountInventory,
+      };
+    });
 
     return NextResponse.json(synced);
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { useSession } from "@/hooks/useSession";
+import { useHomeProducts, useServices, useUserMe } from "@/hooks/useData";
 import {
   Zap,
   Shield,
@@ -15,12 +16,11 @@ import {
   Headphones,
   ChevronRight,
   Star,
-  CheckCircle,
   Play,
   Users,
   CreditCard,
   RefreshCw,
-  LogIn,
+  CheckCircle,
   Wallet,
 } from "lucide-react";
 import { Header } from "@/components/shared/header";
@@ -53,24 +53,10 @@ const features = [
 export default function HomePage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const [products, setProducts] = useState<Array<{
-    id: string; name: string; slug: string; price: number;
-    originalPrice?: number; thumbnail: string; badge?: string;
-    sold: number; rating: number; stock: number; category: { name: string };
-  }>>([]);
-  const [categories, setCategories] = useState<Array<{
-    id: string; name: string; slug: string; icon: string; productCount: number;
-  }>>([]);
-  const [fbServices, setFbServices] = useState<Array<{
-    id: string; name: string; slug: string; icon: string; price: number; description: string;
-  }>>([]);
-  const [igServices, setIgServices] = useState<Array<{
-    id: string; name: string; slug: string; icon: string; price: number; description: string;
-  }>>([]);
-  const [ttServices, setTtServices] = useState<Array<{
-    id: string; name: string; slug: string; icon: string; price: number; description: string;
-  }>>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: homeData, isLoading: homeLoading } = useHomeProducts();
+  const { data: fbServices } = useServices("Facebook");
+  const { data: igServices } = useServices("Instagram");
+  const { data: ttServices } = useServices("TikTok");
   const [selectedService, setSelectedService] = useState<{
     id: string; name: string; slug: string; icon: string; price: number; description: string;
   } | null>(null);
@@ -78,26 +64,9 @@ export default function HomePage() {
   const userFromStore = useUserStore((s) => s.user);
   const fetchUser = useUserStore((s) => s.fetchUser);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchUser();
-    }
+  React.useEffect(() => {
+    if (session?.user) fetchUser();
   }, [session]);
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/home/products").then((res) => res.json()),
-      fetch("/api/services?platform=Facebook").then((res) => res.json()),
-      fetch("/api/services?platform=Instagram").then((res) => res.json()),
-      fetch("/api/services?platform=TikTok").then((res) => res.json()),
-    ]).then(([homeData, fb, ig, tt]) => {
-      if (homeData.products) setProducts(homeData.products);
-      if (homeData.categories) setCategories(homeData.categories);
-      if (Array.isArray(fb)) setFbServices(fb);
-      if (Array.isArray(ig)) setIgServices(ig);
-      if (Array.isArray(tt)) setTtServices(tt);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
 
   const handleProductClick = (e: React.MouseEvent, slug: string) => {
     if (!session) {
@@ -256,13 +225,13 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-            {(loading ? [] : products).slice(0, 10).map((product) => (
-              <Link key={product.id} href={`/tai-khoan/${product.slug}`} onClick={(e) => handleProductClick(e, product.slug)}>
+            {(homeLoading ? [] : (homeData?.products || [])).slice(0, 10).map((product) => (
+              <Link key={product.id} href={`/tai-khoan/${product.slug || product.id}`} onClick={(e) => handleProductClick(e, product.slug || product.id)}>
                 <Card hover glow className="group cursor-pointer overflow-hidden">
                   <div className="relative">
                     <div className="aspect-square overflow-hidden rounded-t-[18px] bg-[#1F2937]">
                       <img
-                        src={product.thumbnail}
+                        src={product.images?.[0] || product.thumbnail || "/placeholder.jpg"}
                         alt={product.name}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
@@ -277,7 +246,7 @@ export default function HomePage() {
                     )}
                     <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1">
                       <Star className="h-3 w-3 fill-[#F59E0B] text-[#F59E0B]" />
-                      <span className="text-xs font-medium text-white">{product.rating}</span>
+                      <span className="text-xs font-medium text-white">{product.rating || "4.8"}</span>
                     </div>
                   </div>
                   <CardContent className="p-4">
@@ -325,7 +294,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {(loading ? [] : fbServices).map((service) => (
+            {(fbServices || []).map((service) => (
                 <Card key={service.id} hover className="group cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex gap-4">
@@ -379,7 +348,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {(loading ? [] : igServices).map((service) => (
+            {(igServices || []).map((service) => (
                 <Card key={service.id} hover className="group cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex gap-4">
@@ -433,7 +402,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {(loading ? [] : ttServices).map((service) => (
+            {(ttServices || []).map((service) => (
                 <Card key={service.id} hover className="group cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex gap-4">
@@ -486,7 +455,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {(loading ? [] : categories).map((cat) => (
+            {(homeData?.categories || []).map((cat) => (
               <Link key={cat.name} href="#">
                 <Card hover glow className="text-center group cursor-pointer">
                   <CardContent className="p-5">

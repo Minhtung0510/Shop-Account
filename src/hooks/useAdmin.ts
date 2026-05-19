@@ -52,15 +52,17 @@ export interface OrderCount {
   warrantyCount: number;
 }
 
-export interface ApiError {
-  error: string;
-}
+// ---- Shared query keys ----
+
+const ADMIN_KEY = ["admin"] as const;
+const USER_ORDERS_KEY = ["user", "orders"] as const;
+const USER_ME_KEY = ["user", "me"] as const;
 
 // ---- Orders ----
 
 export function useAdminOrders() {
   return useQuery<AdminOrder[]>({
-    queryKey: ["admin", "orders"],
+    queryKey: [...ADMIN_KEY, "orders"],
     queryFn: () => fetch("/api/admin/orders").then((r) => r.json()),
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
@@ -81,9 +83,11 @@ export function useUpdateOrderStatus() {
         return r.json();
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      qc.invalidateQueries({ queryKey: ADMIN_KEY });
       qc.invalidateQueries({ queryKey: ["admin", "stats"] });
       qc.invalidateQueries({ queryKey: ["admin", "orderCount"] });
+      qc.invalidateQueries({ queryKey: USER_ORDERS_KEY });
+      qc.invalidateQueries({ queryKey: USER_ME_KEY });
     },
   });
 }
@@ -92,7 +96,7 @@ export function useUpdateOrderStatus() {
 
 export function useAdminWarranties(status?: string) {
   return useQuery<{ warranties: AdminWarranty[] }>({
-    queryKey: ["admin", "warranties", status],
+    queryKey: [...ADMIN_KEY, "warranties", status],
     queryFn: () => {
       const url = status ? `/api/admin/warranties?status=${status}` : "/api/admin/warranties";
       return fetch(url).then((r) => r.json());
@@ -116,7 +120,7 @@ export function useUpdateWarrantyStatus() {
         return r.json();
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin", "warranties"] });
+      qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "warranties"] });
       qc.invalidateQueries({ queryKey: ["admin", "orderCount"] });
     },
   });
@@ -126,7 +130,7 @@ export function useUpdateWarrantyStatus() {
 
 export function useAdminAccounts() {
   return useQuery<AdminAccount[]>({
-    queryKey: ["admin", "accounts"],
+    queryKey: [...ADMIN_KEY, "accounts"],
     queryFn: () => fetch("/api/admin/accounts").then((r) => r.json()),
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
@@ -147,7 +151,8 @@ export function useUpdateAccountBalance() {
         return r.json();
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin", "accounts"] });
+      qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "accounts"] });
+      qc.invalidateQueries({ queryKey: USER_ME_KEY });
     },
   });
 }
@@ -156,7 +161,7 @@ export function useUpdateAccountBalance() {
 
 export function useAdminStats() {
   return useQuery<AdminStats>({
-    queryKey: ["admin", "stats"],
+    queryKey: [...ADMIN_KEY, "stats"],
     queryFn: () => fetch("/api/admin/stats").then((r) => r.json()),
     refetchOnWindowFocus: true,
     staleTime: 60 * 1000,
@@ -167,7 +172,7 @@ export function useAdminStats() {
 
 export function useAdminOrderCount() {
   return useQuery<OrderCount>({
-    queryKey: ["admin", "orderCount"],
+    queryKey: [...ADMIN_KEY, "orderCount"],
     queryFn: () => fetch("/api/admin/orders/count").then((r) => r.json()),
     refetchOnWindowFocus: true,
     staleTime: 15 * 1000,

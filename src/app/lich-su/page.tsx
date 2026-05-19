@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useUserOrders, useOrderDetail, type OrderDetail } from "@/hooks/useData";
 
 const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; color: string }> = {
   SUCCESS: { icon: CheckCircle, label: "Thành công", color: "bg-[#22C55E]" },
@@ -31,23 +32,6 @@ const statusConfig: Record<string, { icon: typeof CheckCircle; label: string; co
   REFUNDED: { icon: RefreshCw, label: "Hoàn tiền", color: "bg-[#A855F7]" },
 };
 
-interface OrderItemData {
-  id: string;
-  quantity: number;
-  price: number;
-  accountData: string | null;
-  product: { name: string; thumbnail: string };
-}
-
-interface OrderDetail {
-  id: string;
-  totalAmount: number;
-  status: string;
-  paymentMethod: string;
-  createdAt: string;
-  orderItems: OrderItemData[];
-}
-
 interface OrderRow {
   id: string;
   type: "PRODUCT" | "SERVICE";
@@ -56,26 +40,12 @@ interface OrderRow {
   status: string;
   date: string;
   createdAt: string;
-  _detail?: OrderDetail;
 }
 
 function OrderExpandedRow({ orderId, type }: { orderId: string; type: "PRODUCT" | "SERVICE" }) {
-  const [detail, setDetail] = useState<OrderDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: detail, isLoading } = useOrderDetail(orderId);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPass, setShowPass] = useState(false);
-
-  useEffect(() => {
-    if (type !== "PRODUCT") {
-      setLoading(false);
-      return;
-    }
-    fetch(`/api/orders/${orderId}`)
-      .then((res) => res.ok ? res.json() : null)
-      .then(setDetail)
-      .catch(() => null)
-      .finally(() => setLoading(false));
-  }, [orderId, type]);
 
   const copyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -88,7 +58,7 @@ function OrderExpandedRow({ orderId, type }: { orderId: string; type: "PRODUCT" 
     <tr>
       <td colSpan={7} className="px-4 py-0">
         <div className="rounded-[12px] border border-[#3B82F6]/20 bg-[#3B82F6]/5 p-4 mb-2">
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-6 w-6 animate-spin text-[#3B82F6]" />
             </div>
@@ -108,13 +78,13 @@ function OrderExpandedRow({ orderId, type }: { orderId: string; type: "PRODUCT" 
               {detail.orderItems.map((item) => (
                 <div key={item.id} className="rounded-[10px] border border-[#1E293B] bg-[#0F172A] p-3">
                   <div className="flex items-center gap-3 mb-3">
-                    {item.product.thumbnail && (
+                    {item.product?.thumbnail && (
                       <div className="h-8 w-8 rounded-[6px] bg-[#1F2937] overflow-hidden shrink-0">
                         <img src={item.product.thumbnail} alt="" className="h-full w-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white">{item.product.name}</p>
+                      <p className="text-sm font-medium text-white">{item.product?.name || "N/A"}</p>
                       <p className="text-xs text-[#64748B]">x{item.quantity} · {formatCurrency(item.price)}</p>
                     </div>
                   </div>
@@ -185,30 +155,14 @@ function OrderExpandedRow({ orderId, type }: { orderId: string; type: "PRODUCT" 
 }
 
 export default function OrderHistoryPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+  const { data: orders = [], isLoading, refetch } = useUserOrders();
 
-  useEffect(() => {
-    if (session) {
-      fetch("/api/orders")
-        .then((res) => res.ok ? res.json() : [])
-        .then(setOrders)
-        .catch(() => setOrders([]))
-        .finally(() => setLoading(false));
-    }
-  }, [session]);
-
-  if (status === "loading" || loading) {
+  if (authStatus === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-[#3B82F6]" />

@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { useServices } from "@/hooks/useData";
+import { useSession } from "@/hooks/useSession";
+import { useUserStore } from "@/store";
+import { OrderFormModal } from "@/components/order-form-modal";
 import {
   MessageSquare,
   ArrowRight,
@@ -14,20 +19,34 @@ import {
   Star,
 } from "lucide-react";
 
-export default function FacebookServicesPage() {
-  const [services, setServices] = useState<Array<{
-    id: string; name: string; icon: string; price: number;
-    description: string; category: string;
-  }>>([]);
-  const [loading, setLoading] = useState(true);
+type Service = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  price: number;
+  description: string;
+  category: string;
+};
 
-  useEffect(() => {
-    fetch("/api/services?platform=Facebook")
-      .then((res) => res.json())
-      .then((data) => { if (Array.isArray(data)) setServices(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+export default function FacebookServicesPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { data: services = [] } = useServices("Facebook");
+  const userFromStore = useUserStore((s) => s.user);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  const handleServiceClick = (service: Service) => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    if (!userFromStore || userFromStore.balance < service.price) {
+      router.push("/nap-tien");
+      return;
+    }
+    setSelectedService(service);
+  };
 
   return (
     <div className="min-h-screen py-8">
@@ -59,7 +78,7 @@ export default function FacebookServicesPage() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(loading ? [] : services).map((service) => (
+          {(services || []).map((service) => (
             <Card key={service.id} hover className="group cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex gap-4 mb-4">
@@ -86,10 +105,11 @@ export default function FacebookServicesPage() {
                   </div>
                   <Button
                     size="sm"
+                    variant="outline"
                     className="group-hover:gap-2"
-                    onClick={() => window.location.href = "/lien-he"}
+                    onClick={() => handleServiceClick(service as Service)}
                   >
-                    Liên hệ
+                    Đặt dịch vụ
                     <ArrowRight className="h-3 w-3" />
                   </Button>
                 </div>
@@ -113,6 +133,16 @@ export default function FacebookServicesPage() {
           </Link>
         </div>
       </div>
+
+      {selectedService && userFromStore && (
+        <OrderFormModal
+          service={selectedService}
+          user={userFromStore}
+          onClose={() => setSelectedService(null)}
+          onRequireLogin={() => router.push("/login")}
+          onRequireNapTien={() => router.push("/nap-tien")}
+        />
+      )}
     </div>
   );
 }
