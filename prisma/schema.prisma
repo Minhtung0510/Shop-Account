@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -192,6 +192,15 @@ model Setting {
   id    String @id @default(cuid())
   key   String @unique
   value String
+}
+
+model WebhookLog {
+  id         String   @id @default(cuid())
+  provider   String
+  externalId String
+  createdAt  DateTime @default(now())
+
+  @@unique([provider, externalId])
 }
 
 model Warranty {

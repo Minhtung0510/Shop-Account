@@ -50,9 +50,7 @@ export function useHomeProducts() {
   return useQuery<HomeData>({
     queryKey: ["home", "products"],
     queryFn: () => fetch("/api/home/products?limit=12").then((r) => r.json()),
-    staleTime: 20 * 1000,
-    refetchInterval: 20 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -90,9 +88,7 @@ export function useProducts(filters?: {
   return useQuery<ProductListRes>({
     queryKey: QUERY_KEYS.products(filters),
     queryFn: () => fetch(`/api/products?${params}`).then((r) => r.json()),
-    staleTime: 30 * 1000,
-    refetchInterval: 20 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -100,9 +96,7 @@ export function useProduct(slug: string) {
   return useQuery<Product>({
     queryKey: QUERY_KEYS.product(slug),
     queryFn: () => fetch(`/api/products/${slug}`).then((r) => r.json()),
-    staleTime: 30 * 1000,
-    refetchInterval: 15 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
     enabled: !!slug,
   });
 }
@@ -113,9 +107,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: () => fetch("/api/categories").then((r) => r.json()),
-    staleTime: 60 * 1000,
-    refetchInterval: 60 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 300 * 1000,
   });
 }
 
@@ -145,9 +137,7 @@ export function useServices(platform?: string) {
           : "/api/services";
       return fetch(url).then((r) => r.json());
     },
-    staleTime: 30 * 1000,
-    refetchInterval: 15 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -192,9 +182,7 @@ export function useUserOrders() {
     queryKey: QUERY_KEYS.userOrders(),
     queryFn: () => fetch("/api/orders").then((r) => r.json()),
     refetchOnWindowFocus: true,
-    staleTime: 15 * 1000,
-    refetchInterval: 20 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -203,9 +191,7 @@ export function useOrderDetail(id: string) {
     queryKey: ["user", "order", id],
     queryFn: () => fetch(`/api/orders/${id}`).then((r) => r.json()),
     enabled: !!id,
-    staleTime: 10 * 1000,
-    refetchInterval: 10 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -226,9 +212,7 @@ export function useUserMe() {
   return useQuery<UserMe>({
     queryKey: QUERY_KEYS.userMe(),
     queryFn: () => fetch("/api/me").then((r) => r.json()),
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
     retry: false,
   });
 }
@@ -320,9 +304,7 @@ export function useUserProfile() {
   return useQuery<UserProfile>({
     queryKey: QUERY_KEYS.userMe(),
     queryFn: () => fetch("/api/me").then((r) => r.json()),
-    staleTime: 30 * 1000,
-    refetchInterval: 60 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
     retry: false,
   });
 }
@@ -331,9 +313,7 @@ export function useUserStats() {
   return useQuery<UserStats>({
     queryKey: ["user", "stats"],
     queryFn: () => fetch("/api/me/stats").then((r) => r.json()),
-    staleTime: 15 * 1000,
-    refetchInterval: 30 * 1000,
-    refetchIntervalInBackground: false,
+    staleTime: 60 * 1000,
     retry: false,
   });
 }

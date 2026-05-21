@@ -72,7 +72,11 @@ export async function GET(request: Request) {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     });
-  } catch {
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+  } catch (error) {
+    console.error("Products API error:", error);
+    return NextResponse.json(
+      { error: "Không thể tải danh sách sản phẩm", items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+      { status: 500 }
+    );
   }
 }

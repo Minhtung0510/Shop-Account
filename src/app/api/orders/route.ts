@@ -50,7 +50,7 @@ export async function GET() {
     return NextResponse.json(all);
   } catch (error) {
     console.error("Orders error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

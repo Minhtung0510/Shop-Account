@@ -1,9 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme inline {
-  --font-sora: "Sora", sans-serif;
-  --font-inter: "Inter", sans-serif;
+  --font-sora: var(--font-sora), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
 
   /* Figma Design Tokens - Dark Mode */
   --color-bg-primary: #0F172A;
@@ -45,7 +44,7 @@
 :root {
   background-color: #0F172A;
   color: #FFFFFF;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-inter), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

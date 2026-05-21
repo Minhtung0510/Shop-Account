@@ -21,6 +21,7 @@ import {
   Plus,
   ChevronRight,
   Loader2,
+  QrCode,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,12 @@ export default function ProductDetailPage() {
     if (!product) return;
     addItem(product, quantity);
     router.push("/gio-hang");
+  };
+
+  const handleBuyNowQR = () => {
+    if (!product) return;
+    addItem(product, quantity);
+    router.push("/thanh-toan-qr");
   };
 
   if (loading) {
@@ -237,6 +244,15 @@ export default function ProductDetailPage() {
                   Thêm vào giỏ
                 </Button>
               </div>
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full border-[#F59E0B]/50 text-[#F59E0B] hover:bg-[#F59E0B]/10"
+                onClick={handleBuyNowQR}
+              >
+                <QrCode className="h-4 w-4" />
+                Mua ngay qua VietQR
+              </Button>
             </div>
 
             {/* Features */}

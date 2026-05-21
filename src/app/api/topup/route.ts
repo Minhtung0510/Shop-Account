@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json(topups);
   } catch (error) {
     console.error("Topup GET error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

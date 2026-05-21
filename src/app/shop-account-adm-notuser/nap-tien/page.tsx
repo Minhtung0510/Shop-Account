@@ -16,7 +16,7 @@ interface TopupRequest {
   amount: number;
   bankCode: string;
   transferContent: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
   verifiedAt: string | null;
   createdAt: string;
   createdFull: string;
@@ -82,6 +82,7 @@ export default function AdminTopupPage() {
     PENDING: { label: "Cho duyet", className: "bg-[#F59E0B]/20 text-[#F59E0B]", icon: Clock },
     APPROVED: { label: "Da duyet", className: "bg-[#22C55E]/20 text-[#22C55E]", icon: CheckCheck },
     REJECTED: { label: "Da tu choi", className: "bg-[#EF4444]/20 text-[#EF4444]", icon: X },
+    CANCELLED: { label: "Da huy", className: "bg-[#64748B]/20 text-[#64748B]", icon: X },
   };
 
   return (

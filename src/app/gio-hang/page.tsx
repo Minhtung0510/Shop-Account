@@ -18,6 +18,7 @@ import {
   ArrowRight,
   CreditCard,
   Shield,
+  QrCode,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
@@ -256,6 +257,19 @@ export default function CartPage() {
                     <CreditCard className="h-4 w-4" />
                     Thanh toán ngay
                   </Button>
+
+                  {session && (userFromStore?.balance ?? session.user.balance) < total && (
+                    <Link href="/thanh-toan-qr" className="block">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full border-[#F59E0B]/50 text-[#F59E0B] hover:bg-[#F59E0B]/10"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        Thanh toán qua VietQR
+                      </Button>
+                    </Link>
+                  )}
 
                   {!session && (
                     <p className="text-xs text-center text-[#64748B]">

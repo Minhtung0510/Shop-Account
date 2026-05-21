@@ -52,6 +52,8 @@ export function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSocialMenuOpen, setIsSocialMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userMenuVisible, setUserMenuVisible] = useState(false);
+  const [socialMenuVisible, setSocialMenuVisible] = useState(false);
   const userFromStore = useUserStore((s) => s.user);
   const fetchUser = useUserStore((s) => s.fetchUser);
   const cartItemCount = useCartStore((s) => s.getItemCount());
@@ -80,32 +82,37 @@ export function Header() {
         <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
-                <ShoppingCart className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
+                  <ShoppingCart className="h-5 w-5 text-white" />
+                </div>
                 <span className="font-sora text-xl font-bold text-white">
                   {settings.store_name || "ShopAccount"}
                 </span>
-                {settings.store_hotline && (
-                  <a
-                    href={`tel:${settings.store_hotline.replace(/\s/g, "")}`}
-                    className="hidden xl:flex items-center gap-1.5 rounded-[8px] border border-[#1E293B] bg-[#111827] px-2.5 py-1 text-xs text-[#94A3B8] hover:border-[#3B82F6] hover:text-white transition-all"
-                  >
-                    <span>📞</span>
-                    <span className="font-medium">{settings.store_hotline}</span>
-                  </a>
-                )}
-              </div>
-            </Link>
+              </Link>
+              {settings.store_hotline && (
+                <a
+                  href={`tel:${settings.store_hotline.replace(/\s/g, "")}`}
+                  className="hidden xl:flex items-center gap-1.5 rounded-[8px] border border-[#1E293B] bg-[#111827] px-2.5 py-1 text-xs text-[#94A3B8] hover:border-[#3B82F6] hover:text-white transition-all"
+                >
+                  <span>📞</span>
+                  <span className="font-medium">{settings.store_hotline}</span>
+                </a>
+              )}
+            </div>
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 if (item.hasDropdown && item.href === "/dich-vu-facebook") {
                   return (
-                    <div key={item.href} className="relative">
+                    <div
+                      key={item.href}
+                      onMouseEnter={() => setIsSocialMenuOpen(true)}
+                      onMouseLeave={() => setIsSocialMenuOpen(false)}
+                      className="relative"
+                    >
                       <button
                         onClick={() => setIsSocialMenuOpen(!isSocialMenuOpen)}
                         className={cn(
@@ -184,7 +191,11 @@ export function Header() {
 
               {/* Auth Section */}
               {mounted && userFromStore ? (
-                <div className="relative">
+                <div
+                  onMouseEnter={() => setIsUserMenuOpen(true)}
+                  onMouseLeave={() => setIsUserMenuOpen(false)}
+                  className="relative"
+                >
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-2 rounded-[12px] border border-[#1E293B] bg-[#111827] px-3 py-2 transition-all duration-200 hover:border-[#3B82F6]"

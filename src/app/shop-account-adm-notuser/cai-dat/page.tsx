@@ -164,6 +164,44 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Nạp tiền tự động */}
+          <Card className="!rounded-[16px] border border-[#22C55E]/30">
+            <CardHeader className="p-5 pb-3">
+              <CardTitle className="text-white">Nạp tiền tự động (SePay / Casso)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-5 pt-0 space-y-3 text-sm text-[#94A3B8]">
+              <p>
+                Kết nối tài khoản ngân hàng với{" "}
+                <a href="https://my.sepay.vn" target="_blank" rel="noopener noreferrer" className="text-[#3B82F6] hover:underline">
+                  SePay
+                </a>{" "}
+                hoặc{" "}
+                <a href="https://casso.vn" target="_blank" rel="noopener noreferrer" className="text-[#3B82F6] hover:underline">
+                  Casso
+                </a>{" "}
+                để tự động cộng tiền khi khách chuyển khoản.
+              </p>
+              <div className="rounded-[12px] border border-[#1E293B] bg-[#0F172A] p-4 space-y-2 font-mono text-xs text-[#E2E8F0]">
+                <p>
+                  <span className="text-[#64748B]">SePay webhook:</span>
+                  <br />
+                  {typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/sepay` : "https://your-domain.com/api/webhooks/sepay"}
+                </p>
+                <p>
+                  <span className="text-[#64748B]">Casso webhook:</span>
+                  <br />
+                  {typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/casso` : "https://your-domain.com/api/webhooks/casso"}
+                </p>
+              </div>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>SePay: Cấu hình mã thanh toán — Tiền tố <strong className="text-white">NAPTIEN</strong>, hậu tố 10 ký tự chữ/số</li>
+                <li>Thêm biến môi trường <code className="text-[#F59E0B]">SEPAY_WEBHOOK_API_KEY</code> (API Key từ SePay)</li>
+                <li>Casso: Header <code className="text-[#F59E0B]">secure-token</code> = <code className="text-[#F59E0B]">CASSO_WEBHOOK_SECRET</code></li>
+                <li>Chạy <code className="text-[#F59E0B]">npx prisma db push</code> sau khi cập nhật (bảng WebhookLog)</li>
+              </ol>
+            </CardContent>
+          </Card>
+
           {/* Thông tin MoMo */}
           <Card className="!rounded-[16px]">
             <CardHeader className="p-5 pb-3">

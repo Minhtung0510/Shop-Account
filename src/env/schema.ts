@@ -17,6 +17,17 @@ export const envSchema = z.object({
   VIETQR_ACCOUNT_ID: z.string().optional(),
 
   BANKING_WEBHOOK_SECRET: z.string().optional(),
+  SEPAY_WEBHOOK_API_KEY: z.string().optional(),
+  CASSO_WEBHOOK_SECRET: z.string().optional(),
+
+  ADMIN_EMAIL: z.string().email().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  BREVO_API_KEY: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  FROM_EMAIL: z.string().email().optional(),
 
   SENTRY_DSN: z.string().optional(),
 });

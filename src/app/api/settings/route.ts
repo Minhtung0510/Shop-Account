@@ -13,6 +13,6 @@ export async function GET() {
     return NextResponse.json(map);
   } catch (error) {
     console.error("Settings public GET error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    return NextResponse.json({}, { status: 200 });
   }
 }

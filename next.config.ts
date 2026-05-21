@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  allowedDevOrigins: ["frantic-wool-ranger.ngrok-free.dev", "frantic-woongrok-free.dev"],
 };
 
 export default nextConfig;

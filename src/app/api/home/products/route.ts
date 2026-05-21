@@ -50,7 +50,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ products: synced, categories, services });
   } catch (error) {
-    console.error("Products API error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    console.error("Home Products API error:", error);
+    return NextResponse.json(
+      { error: "Không thể tải dữ liệu", products: [], categories: [], services: [] },
+      { status: 500 }
+    );
   }
 }

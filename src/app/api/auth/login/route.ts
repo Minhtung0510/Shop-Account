@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { signIn } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +25,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Login error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    return NextResponse.json({ error: "Lỗi server khi đăng nhập" }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  try {
+    const session = await auth();
+    return NextResponse.json(session);
+  } catch (error) {
+    console.error("Session check error:", error);
+    return NextResponse.json({ user: null });
   }
 }

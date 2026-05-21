@@ -21,6 +21,6 @@ export async function GET(request: Request) {
     return NextResponse.json(services);
   } catch (error) {
     console.error("Services API error:", error);
-    return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
