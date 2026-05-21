@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { buildVietQrImageUrl } from "@/lib/vietqr";
+import { getSMTPTransporter } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
