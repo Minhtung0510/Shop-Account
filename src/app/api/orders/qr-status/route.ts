@@ -210,6 +210,7 @@ export async function POST(request: Request) {
 
           await tx.accountInventory.deleteMany({
             where: { id: { in: availableAccounts.map((a) => a.id) } },
+          });
         }
 
         const remainingStock = await tx.accountInventory.count({
