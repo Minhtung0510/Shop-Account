@@ -3,6 +3,37 @@
  * Type definitions for team members and roles
  */
 
+// ============ E-COMMERCE TYPES ============
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  productCount: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  categoryId: string;
+  category?: { id: string; name: string; slug: string };
+  thumbnail: string;
+  images: string;
+  stock: number;
+  rating: number;
+  sold: number;
+  warranty?: string;
+  badge?: string;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ============ ENUMS ============
 
 export enum AgentRole {

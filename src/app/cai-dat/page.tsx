@@ -267,10 +267,13 @@ export default function ProfilePage() {
         username: editUsername.trim(),
         phone: editPhone.trim() || undefined,
       });
-      setUserStore({
-        ...(useUserStore.getState().user ?? {}),
-        name: result.username,
-      });
+      const currentUser = useUserStore.getState().user;
+      if (currentUser) {
+        useUserStore.getState().setUser({
+          ...currentUser,
+          name: result.username,
+        });
+      }
       setEditing(false);
       toast.success("Cập nhật thông tin thành công!");
     } catch (err: any) {
@@ -401,7 +404,7 @@ export default function ProfilePage() {
                     <label className="text-xs text-[#64748B] flex items-center gap-1">
                       <Calendar className="h-3 w-3" /> Ngày tạo
                     </label>
-                    <p className="text-white font-medium">{formatDate(user?.createdAt)}</p>
+                    <p className="text-white font-medium">{formatDate(user?.createdAt ?? null)}</p>
                   </div>
                 </div>
 
