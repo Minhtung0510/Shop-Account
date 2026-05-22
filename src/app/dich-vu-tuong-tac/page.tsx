@@ -12,7 +12,6 @@ export default function InteractionServicesPage() {
   return (
     <div className="min-h-screen py-8">
       <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
-        {/* Header */}
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-4 py-1.5 text-sm text-[#3B82F6] mb-4">
             <Sparkles className="h-4 w-4" />
@@ -26,7 +25,6 @@ export default function InteractionServicesPage() {
           </p>
         </div>
 
-        {/* Coming Soon */}
         <div className="flex flex-col items-center justify-center py-24">
           <div className="relative mb-8">
             <div className="flex h-32 w-32 items-center justify-center rounded-full bg-[#3B82F6]/10">
@@ -50,7 +48,7 @@ export default function InteractionServicesPage() {
                 Quay lại trang chủ
               </Button>
             </Link>
-            <Link href="/contact">
+            <Link href="/lien-he">
               <Button>
                 Liên hệ hỗ trợ
               </Button>
@@ -58,7 +56,6 @@ export default function InteractionServicesPage() {
           </div>
         </div>
 
-        {/* Preview Features */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 opacity-50 pointer-events-none">
           {[
             { icon: "👍", title: "Tăng Like", desc: "Facebook, Instagram, TikTok" },

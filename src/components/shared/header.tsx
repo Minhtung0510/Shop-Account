@@ -63,8 +63,14 @@ export function Header() {
 
   useEffect(() => {
     setMounted(true);
-    fetchUser();
   }, [pathname]);
+
+  // Chỉ fetch user khi chưa có data hoặc force refresh
+  useEffect(() => {
+    if (!userFromStore) {
+      fetchUser();
+    }
+  }, []);
 
   const navItems = publicNavItems;
 

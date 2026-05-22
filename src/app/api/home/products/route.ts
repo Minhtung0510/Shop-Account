@@ -30,7 +30,8 @@ export async function GET(request: Request) {
       }),
       db.service.findMany({
         where: { status: "ACTIVE" },
-        take: 6,
+        orderBy: { createdAt: "desc" },
+        take: 50,
       }),
     ]);
 
@@ -48,7 +49,11 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ products: synced, categories, services });
+    return NextResponse.json({ products: synced, categories, services }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   } catch (error) {
     console.error("Home Products API error:", error);
     return NextResponse.json(

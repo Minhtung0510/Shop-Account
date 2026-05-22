@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,8 +80,8 @@ function OrderExpandedRow({ orderId, type }: { orderId: string; type: "PRODUCT" 
                 <div key={item.id} className="rounded-[10px] border border-[#1E293B] bg-[#0F172A] p-3">
                   <div className="flex items-center gap-3 mb-3">
                     {item.product?.thumbnail && (
-                      <div className="h-8 w-8 rounded-[6px] bg-[#1F2937] overflow-hidden shrink-0">
-                        <img src={item.product.thumbnail} alt="" className="h-full w-full object-cover" />
+                      <div className="h-8 w-8 rounded-[6px] bg-[#1F2937] overflow-hidden shrink-0 relative">
+                        <Image src={item.product.thumbnail} alt="" fill sizes="32px" className="object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

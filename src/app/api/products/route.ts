@@ -71,6 +71,10 @@ export async function GET(request: Request) {
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
     });
   } catch (error) {
     console.error("Products API error:", error);

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
@@ -14,10 +15,24 @@ import {
   Settings,
   LogOut,
   Sun,
+  Shield,
+  ClipboardList,
+  Crown,
+  UserCog,
+  UserCheck,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useAdminOrderCount } from "@/hooks/useAdmin";
+
+const ROLE_LEVELS: Record<string, number> = {
+  SUPER_ADMIN: 1,
+  ADMIN: 2,
+  MODERATOR: 3,
+  STAFF: 4,
+  USER: 5,
+};
 
 interface NavItem {
   href: string;
@@ -25,6 +40,7 @@ interface NavItem {
   icon: React.ElementType;
   badge?: number;
   isLogout?: boolean;
+  minRole?: number;
 }
 
 export function AdminSidebar() {
@@ -32,6 +48,8 @@ export function AdminSidebar() {
   const { data: session } = useSession();
   const { data: countData } = useAdminOrderCount();
 
+  const userRole = session?.user?.role || "USER";
+  const userLevel = ROLE_LEVELS[userRole] || 5;
   const pendingServiceCount = countData?.serviceCount ?? 0;
   const pendingWarrantyCount = countData?.warrantyCount ?? 0;
 
@@ -39,25 +57,84 @@ export function AdminSidebar() {
     signOut({ callbackUrl: "/login" });
   };
 
+  const canAccess = (minRole?: number) => {
+    if (!minRole) return true;
+    return userLevel <= minRole;
+  };
+
+  const getRoleIcon = () => {
+    switch (userRole) {
+      case "SUPER_ADMIN":
+        return Crown;
+      case "ADMIN":
+        return Shield;
+      case "MODERATOR":
+        return UserCog;
+      case "STAFF":
+        return UserCheck;
+      default:
+        return User;
+    }
+  };
+
+  const getRoleLabel = () => {
+    switch (userRole) {
+      case "SUPER_ADMIN":
+        return "Chủ Shop";
+      case "ADMIN":
+        return "Quản trị viên";
+      case "MODERATOR":
+        return "Điều hành viên";
+      case "STAFF":
+        return "Nhân viên";
+      default:
+        return "Người dùng";
+    }
+  };
+
+  const getRoleColor = () => {
+    switch (userRole) {
+      case "SUPER_ADMIN":
+        return "text-[#EF4444]";
+      case "ADMIN":
+        return "text-[#F59E0B]";
+      case "MODERATOR":
+        return "text-[#3B82F6]";
+      case "STAFF":
+        return "text-[#10B981]";
+      default:
+        return "text-[#64748B]";
+    }
+  };
+
+  const RoleIcon = getRoleIcon();
+
   const adminSections: { title: string; items: NavItem[] }[] = [
     {
       title: "QUẢN TRỊ",
       items: [
-        { href: "/shop-account-adm-notuser", label: "Tổng quan", icon: LayoutDashboard },
-        { href: "/shop-account-adm-notuser/danh-muc", label: "Danh mục", icon: LayoutGrid },
-        { href: "/shop-account-adm-notuser/nguoi-dung", label: "Người dùng", icon: Users },
-        { href: "/shop-account-adm-notuser/san-pham", label: "Sản phẩm", icon: Package },
-        { href: "/shop-account-adm-notuser/don-hang", label: "Đơn hàng", icon: ShoppingBag, badge: pendingServiceCount > 0 ? pendingServiceCount : undefined },
-        { href: "/shop-account-adm-notuser/bao-hanh", label: "Bảo hành", icon: ShieldCheck, badge: pendingWarrantyCount > 0 ? pendingWarrantyCount : undefined },
-        { href: "/shop-account-adm-notuser/dich-vu", label: "Dịch vụ", icon: Headphones },
-        { href: "/shop-account-adm-notuser/nap-tien", label: "Nạp tiền", icon: Banknote },
-        { href: "/shop-account-adm-notuser/cai-dat", label: "Cài đặt Web", icon: Settings },
+        { href: "/adm", label: "Dashboard", icon: LayoutDashboard, minRole: 4 },
+        { href: "/adm/danh-muc", label: "Danh mục", icon: LayoutGrid, minRole: 2 },
+        { href: "/adm/nguoi-dung", label: "Người dùng", icon: Users, minRole: 2 },
+        { href: "/adm/san-pham", label: "Sản phẩm", icon: Package, minRole: 2 },
+        { href: "/adm/don-hang", label: "Đơn hàng", icon: ShoppingBag, minRole: 3, badge: pendingServiceCount > 0 ? pendingServiceCount : undefined },
+        { href: "/adm/bao-hanh", label: "Bảo hành", icon: ShieldCheck, minRole: 3, badge: pendingWarrantyCount > 0 ? pendingWarrantyCount : undefined },
+        { href: "/adm/dich-vu", label: "Dịch vụ", icon: Headphones, minRole: 2 },
+        { href: "/adm/nap-tien", label: "Nạp tiền", icon: Banknote, minRole: 2 },
+        { href: "/adm/cai-dat", label: "Cài đặt Web", icon: Settings, minRole: 2 },
       ],
     },
     {
       title: "HỆ THỐNG",
       items: [
-        { href: "/", label: "Dashboard User", icon: Sun },
+        { href: "/adm/roles", label: "Vai trò & Quyền", icon: Shield, minRole: 1 },
+        { href: "/adm/nhat-ky", label: "Nhật ký hoạt động", icon: ClipboardList, minRole: 2 },
+      ],
+    },
+    {
+      title: "TÀI KHOẢN",
+      items: [
+        { href: "/", label: "Trang chủ", icon: Sun },
         { href: "/logout", label: "Đăng xuất", icon: LogOut, isLogout: true },
       ],
     },
@@ -89,7 +166,10 @@ export function AdminSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm font-semibold text-white">{session.user.name}</p>
-              <p className="text-xs text-[#6366F1]">Quản trị viên</p>
+              <p className={`text-xs ${getRoleColor()} flex items-center gap-1`}>
+                <RoleIcon className="h-3 w-3" />
+                {getRoleLabel()}
+              </p>
             </div>
           </div>
         </div>
@@ -104,7 +184,10 @@ export function AdminSidebar() {
             </p>
             <div className="space-y-0.5">
               {section.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                if (!canAccess(item.minRole)) return null;
+
+                const isActive = pathname === item.href || (item.href !== "/adm" && item.href !== "/" && pathname.startsWith(item.href));
+
                 if (item.isLogout) {
                   return (
                     <button
@@ -120,6 +203,7 @@ export function AdminSidebar() {
                     </button>
                   );
                 }
+
                 return (
                   <Link
                     key={item.href}

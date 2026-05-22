@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -116,27 +117,39 @@ export default function ProductDetailPage() {
         </nav>
 
         {/* Product Layout */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           {/* Images */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="w-full max-h-[600px]"
           >
             <div className="space-y-4">
               {/* Main Image */}
-              <div className="relative aspect-square rounded-[18px] overflow-hidden bg-[#111827] border border-[#1E293B]">
-                <img
-                  src={product.thumbnail}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
+              <div className="relative rounded-[18px] overflow-hidden bg-[#111827] border border-[#1E293B] max-h-[400px] overflow-y-auto">
+                {product.thumbnail?.toLowerCase().includes(".gif") ? (
+                  <img
+                    src={product.thumbnail}
+                    alt={product.name}
+                    className="w-full h-auto object-contain p-4"
+                  />
+                ) : (
+                  <Image
+                    src={product.thumbnail}
+                    alt={product.name}
+                    width={500}
+                    height={400}
+                    className="w-full h-auto object-contain p-4"
+                    priority
+                  />
+                )}
                 {product.badge && (
                   <Badge
                     variant={
                       product.badge === "BEST_SELLER" ? "orange" :
                       product.badge === "HOT" ? "error" : "purple"
                     }
-                    className="absolute left-4 top-4"
+                    className="absolute left-4 top-4 z-10"
                   >
                     {product.badge === "BEST_SELLER" ? "🔥 Best Seller" :
                      product.badge === "HOT" ? "🔥 Hot" : "⭐ Premium"}
@@ -145,17 +158,21 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Thumbnails */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2 max-h-[100px]">
                 {[product.thumbnail, product.thumbnail, product.thumbnail, product.thumbnail].map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
                     className={cn(
-                      "aspect-square rounded-[12px] overflow-hidden border-2 transition-all",
+                      "aspect-square rounded-[12px] overflow-hidden border-2 transition-all flex items-center justify-center bg-[#111827]",
                       activeImage === i ? "border-[#3B82F6]" : "border-transparent opacity-60 hover:opacity-100"
                     )}
                   >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    {img?.toLowerCase().includes(".gif") ? (
+                      <img src={img} alt="" className="w-full h-auto object-contain p-1" />
+                    ) : (
+                      <Image src={img} alt="" width={80} height={80} className="w-full h-auto object-contain p-1" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -166,7 +183,7 @@ export default function ProductDetailPage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
+            className="space-y-6 relative z-20 bg-[#0F172A]/80 backdrop-blur-sm rounded-[18px] p-6"
           >
             <div>
               <p className="text-sm text-[#64748B] mb-2">{product.category?.name}</p>
@@ -189,8 +206,8 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Price */}
-            <div className="rounded-[16px] border border-[#1E293B] bg-[#111827] p-5">
-              <div className="flex items-end gap-3 mb-4">
+            <div className="relative rounded-[16px] border border-[#1E293B] bg-[#111827] p-5 z-20">
+              <div className="flex items-end gap-3 mb-4 flex-wrap">
                 <span className="font-sora text-4xl font-bold text-[#3B82F6]">
                   {formatCurrency(product.price)}
                 </span>
@@ -211,20 +228,41 @@ export default function ProductDetailPage() {
                 <span className="text-sm text-[#94A3B8]">Số lượng:</span>
                 <div className="flex items-center border border-[#1E293B] rounded-[12px] overflow-hidden">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="flex h-10 w-10 items-center justify-center text-[#94A3B8] hover:bg-[#1F2937] transition-colors"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="flex h-10 w-10 items-center justify-center text-[#94A3B8] hover:bg-[#1F2937] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
                   <input
                     type="number"
+                    min="1"
+                    max={product.stock || 1}
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, parseInt(e.target.value) || 1)))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        return;
+                      }
+                      const num = parseInt(val);
+                      if (!isNaN(num)) {
+                        setQuantity(Math.max(1, Math.min(product.stock || 1, num)));
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const num = parseInt(e.target.value);
+                      if (isNaN(num) || num < 1) {
+                        setQuantity(1);
+                      } else {
+                        setQuantity(Math.min(product.stock || 1, num));
+                      }
+                    }}
                     className="w-16 h-10 text-center bg-transparent text-white border-x border-[#1E293B] text-sm focus:outline-none"
                   />
                   <button
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="flex h-10 w-10 items-center justify-center text-[#94A3B8] hover:bg-[#1F2937] transition-colors"
+                    onClick={() => setQuantity(q => Math.min(product.stock || 1, q + 1))}
+                    disabled={product.stock === 0}
+                    className="flex h-10 w-10 items-center justify-center text-[#94A3B8] hover:bg-[#1F2937] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -235,9 +273,9 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3">
-                <Button onClick={handleBuyNow} size="lg" className="flex-1">
-                  <ShoppingCart className="h-4 w-4" />
+              <div className="flex gap-3 relative z-10">
+                <Button onClick={handleBuyNow} size="lg" className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
                   Mua ngay
                 </Button>
                 <Button variant="outline" size="lg" className="flex-1" onClick={handleAddToCart}>
@@ -247,10 +285,10 @@ export default function ProductDetailPage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full border-[#F59E0B]/50 text-[#F59E0B] hover:bg-[#F59E0B]/10"
+                className="w-full mt-7 border-[#F59E0B]/50 text-[#F59E0B] hover:bg-[#F59E0B]/10"
                 onClick={handleBuyNowQR}
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-4 w-4 mr-2" />
                 Mua ngay qua VietQR
               </Button>
             </div>

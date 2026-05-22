@@ -25,7 +25,7 @@ interface AdminUser {
   name: string;
   email: string;
   phone: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "MODERATOR" | "ADMIN" | "SUPER_ADMIN";
   balance: number;
   rank: string;
   orders: number;
@@ -120,16 +120,18 @@ function EditUserModal({
             <label className="mb-1.5 block text-xs font-medium text-[#64748B]">
               Vai trò
             </label>
-            <select
-              value={form.role}
-              onChange={(e) =>
-                setForm({ ...form, role: e.target.value as "ADMIN" | "USER" })
-              }
-              className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
-            >
-              <option value="USER">USER</option>
-              <option value="ADMIN">ADMIN</option>
-            </select>
+              <select
+                value={form.role}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value as "SUPER_ADMIN" | "ADMIN" | "MODERATOR" | "USER" })
+                }
+                className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
+              >
+                <option value="USER">USER - Người dùng</option>
+                <option value="MODERATOR">MODERATOR - Điều hành</option>
+                <option value="ADMIN">ADMIN - Quản trị</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN - Quản trị cao cấp</option>
+              </select>
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-[#64748B]">
@@ -175,14 +177,14 @@ export default function AdminUsersPage() {
   const deleteUser = useDeleteUser();
 
   const handleToggleRole = (user: AdminUser) => {
-    if (
-      !confirm(
-        `Bạn có chắc muốn ${user.role === "ADMIN" ? "gỡ quyền ADMIN" : "nâng cấp thành ADMIN"} cho ${user.name}?`
-      )
-    )
+    const roles = ["USER", "MODERATOR", "ADMIN", "SUPER_ADMIN"];
+    const currentIndex = roles.indexOf(user.role);
+    const nextRole = roles[(currentIndex + 1) % roles.length];
+    
+    if (!confirm(`Bạn có chắc muốn đổi vai trò từ "${user.role}" thành "${nextRole}" cho ${user.name}?`))
       return;
     updateUser.mutate(
-      { id: user.id, role: user.role === "ADMIN" ? "USER" : "ADMIN" },
+      { id: user.id, role: nextRole },
       { onSuccess: () => refetch() }
     );
   };
@@ -310,8 +312,12 @@ export default function AdminUsersPage() {
                         <td className="px-4 py-3">
                           <Badge
                             className={`text-xs ${
-                              user.role === "ADMIN"
+                              user.role === "SUPER_ADMIN"
+                                ? "bg-red-500/20 text-red-400"
+                                : user.role === "ADMIN"
                                 ? "bg-purple-500/20 text-purple-400"
+                                : user.role === "MODERATOR"
+                                ? "bg-blue-500/20 text-blue-400"
                                 : "bg-slate-500/20 text-slate-400"
                             }`}
                           >

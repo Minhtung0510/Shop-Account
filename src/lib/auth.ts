@@ -97,3 +97,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
+
+export const ROLE_LEVELS: Record<string, number> = {
+  SUPER_ADMIN: 1,
+  ADMIN: 2,
+  MODERATOR: 3,
+  STAFF: 4,
+  USER: 5,
+};
+
+export const ROUTE_REQUIREMENTS: Record<string, { minLevel: number }> = {
+  "/adm": { minLevel: 4 },
+  "/adm/san-pham": { minLevel: 2 },
+  "/adm/danh-muc": { minLevel: 2 },
+  "/adm/don-hang": { minLevel: 3 },
+  "/adm/bao-hanh": { minLevel: 3 },
+  "/adm/dich-vu": { minLevel: 2 },
+  "/adm/nguoi-dung": { minLevel: 2 },
+  "/adm/nap-tien": { minLevel: 2 },
+  "/adm/cai-dat": { minLevel: 2 },
+  "/adm/roles": { minLevel: 1 },
+  "/adm/nhat-ky": { minLevel: 2 },
+};

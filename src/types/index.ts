@@ -34,6 +34,252 @@ export interface Product {
   updatedAt: Date;
 }
 
+// ============ AUDIT LOG TYPES ============
+
+export type AuditAction = 
+  | 'CREATE'
+  | 'READ'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'LOGIN_FAILED'
+  | 'PASSWORD_CHANGE'
+  | 'PASSWORD_RESET'
+  | 'PERMISSION_CHANGE'
+  | 'ROLE_CHANGE'
+  | 'EXPORT'
+  | 'IMPORT'
+  | 'APPROVE'
+  | 'REJECT'
+  | 'CANCEL'
+  | 'REFUND';
+
+export type EntityType = 
+  | 'users'
+  | 'products'
+  | 'categories'
+  | 'orders'
+  | 'transactions'
+  | 'settings'
+  | 'roles'
+  | 'audit_logs'
+  | 'comments'
+  | 'reviews';
+
+export interface AuditLog {
+  id: string;
+  userId?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  action: AuditAction;
+  entityType: EntityType;
+  entityId?: string;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface AuditLogFilter {
+  userId?: string;
+  action?: AuditAction;
+  entityType?: EntityType;
+  entityId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  page?: number;
+  limit?: number;
+}
+
+export interface AuditLogResponse {
+  logs: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ============ ROLE & PERMISSION TYPES ============
+
+// Role hierarchy levels
+export enum RoleLevel {
+  SUPER_ADMIN = 1,
+  ADMIN = 2,
+  MODERATOR = 3,
+  STAFF = 4,
+  USER = 5,
+}
+
+export const ROLE_LABELS: Record<RoleLevel, string> = {
+  [RoleLevel.SUPER_ADMIN]: "Chủ Shop",
+  [RoleLevel.ADMIN]: "Quản trị viên",
+  [RoleLevel.MODERATOR]: "Điều hành viên",
+  [RoleLevel.STAFF]: "Nhân viên",
+  [RoleLevel.USER]: "Người dùng",
+};
+
+// Permission types
+export type Permission = 
+  | 'users:read'
+  | 'users:create'
+  | 'users:update'
+  | 'users:delete'
+  | 'products:read'
+  | 'products:create'
+  | 'products:update'
+  | 'products:delete'
+  | 'categories:read'
+  | 'categories:create'
+  | 'categories:update'
+  | 'categories:delete'
+  | 'orders:read'
+  | 'orders:update'
+  | 'orders:delete'
+  | 'orders:refund'
+  | 'transactions:read'
+  | 'transactions:create'
+  | 'settings:read'
+  | 'settings:update'
+  | 'audit_logs:read'
+  | 'audit_logs:delete'
+  | 'reports:read'
+  | 'reports:export'
+  | 'roles:read'
+  | 'roles:create'
+  | 'roles:update'
+  | 'roles:delete'
+  | 'warranty:read'
+  | 'warranty:update'
+  | 'services:read'
+  | 'services:create'
+  | 'services:update'
+  | 'services:delete';
+
+// Permission groups for UI
+export interface PermissionGroup {
+  key: string;
+  label: string;
+  icon: string;
+  permissions: Permission[];
+}
+
+export const PERMISSION_GROUPS: PermissionGroup[] = [
+  {
+    key: 'dashboard',
+    label: 'Dashboard',
+    icon: 'LayoutDashboard',
+    permissions: ['reports:read'],
+  },
+  {
+    key: 'products',
+    label: 'Sản phẩm',
+    icon: 'Package',
+    permissions: ['products:read', 'products:create', 'products:update', 'products:delete'],
+  },
+  {
+    key: 'categories',
+    label: 'Danh mục',
+    icon: 'LayoutGrid',
+    permissions: ['categories:read', 'categories:create', 'categories:update', 'categories:delete'],
+  },
+  {
+    key: 'orders',
+    label: 'Đơn hàng',
+    icon: 'ShoppingBag',
+    permissions: ['orders:read', 'orders:update', 'orders:delete', 'orders:refund'],
+  },
+  {
+    key: 'users',
+    label: 'Người dùng',
+    icon: 'Users',
+    permissions: ['users:read', 'users:create', 'users:update', 'users:delete'],
+  },
+  {
+    key: 'finance',
+    label: 'Tài chính',
+    icon: 'Banknote',
+    permissions: ['transactions:read', 'transactions:create', 'reports:read', 'reports:export'],
+  },
+  {
+    key: 'warranty',
+    label: 'Bảo hành',
+    icon: 'Shield',
+    permissions: ['warranty:read', 'warranty:update'],
+  },
+  {
+    key: 'services',
+    label: 'Dịch vụ',
+    icon: 'Headphones',
+    permissions: ['services:read', 'services:create', 'services:update', 'services:delete'],
+  },
+  {
+    key: 'roles',
+    label: 'Vai trò',
+    icon: 'ShieldCheck',
+    permissions: ['roles:read', 'roles:create', 'roles:update', 'roles:delete'],
+  },
+  {
+    key: 'settings',
+    label: 'Cài đặt',
+    icon: 'Settings',
+    permissions: ['settings:read', 'settings:update'],
+  },
+  {
+    key: 'audit',
+    label: 'Nhật ký',
+    icon: 'ClipboardList',
+    permissions: ['audit_logs:read', 'audit_logs:delete'],
+  },
+];
+
+export interface Role {
+  id: string;
+  name: string;
+  level: RoleLevel;
+  description?: string;
+  permissions: Permission[];
+  isSystem: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RoleWithUserCount extends Role {
+  userCount: number;
+}
+
+// ============ USER WITH ROLE ============
+
+export interface UserWithRole {
+  id: string;
+  name: string;
+  email: string;
+  balance: number;
+  role: string;
+  permissions: Permission[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============ ADMIN STATS ============
+
+export interface AdminStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  recentLogs: AuditLog[];
+  activeUsers: number;
+  lowStockProducts: number;
+  pendingOrders: number;
+}
+
 // ============ ENUMS ============
 
 export enum AgentRole {

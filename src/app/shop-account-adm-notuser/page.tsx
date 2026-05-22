@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
   const session = await auth();
 
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "ADMIN") redirect("/");
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") redirect("/");
 
   const data = await getDashboardData();
 

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getRecentAuditLogs } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
+    if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
     }
 
@@ -23,6 +24,8 @@ export async function GET() {
       recentOrders,
       orderStats,
       topUsers,
+      recentLogs,
+      lowStockProducts,
     ] = await Promise.all([
       db.user.count({ where: { role: "USER" } }),
       db.order.count(),
@@ -52,6 +55,8 @@ export async function GET() {
         orderBy: { orders: { _count: "desc" } },
         take: 5,
       }),
+      getRecentAuditLogs(10),
+      db.product.count({ where: { stock: { lte: 5 } } }),
     ]);
 
     return NextResponse.json({
@@ -64,6 +69,7 @@ export async function GET() {
         ordersChange: 8,
         revenueChange: 23,
         todayOrdersChange: 15,
+        lowStockProducts,
       },
       recentOrders: recentOrders.map((o) => ({
         id: o.id,
@@ -83,6 +89,7 @@ export async function GET() {
         username: u.username,
         orderCount: u._count.orders,
       })),
+      recentLogs: recentLogs.success ? recentLogs.data : [],
     });
   } catch (error) {
     console.error("Admin dashboard error:", error);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore, useUIStore } from "@/store";
@@ -87,11 +88,13 @@ export function CartDrawer() {
                     <Card key={item.product.id} className="!rounded-[14px]">
                       <CardContent className="p-3">
                         <div className="flex gap-3">
-                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px] bg-[#1F2937]">
-                            <img
+                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px] bg-[#1F2937] relative">
+                            <Image
                               src={item.product.thumbnail || "/placeholder.png"}
                               alt={item.product.name}
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="64px"
+                              className="object-cover"
                             />
                           </div>
                           <div className="flex flex-1 flex-col gap-1">

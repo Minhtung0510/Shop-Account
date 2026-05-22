@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts, useCategories } from "@/hooks/useData";
 import type { Product, Category } from "@/types";
+import { motion } from "framer-motion";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const sortOptions = [
   { value: "newest", label: "Mới nhất" },
@@ -59,6 +62,10 @@ function ProductsContent() {
 
   const products = data?.items || [];
   const serverCategories = data?.categories || categoriesData || [];
+
+  // Scroll reveal
+  const headerRef = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
+  const productsRef = useScrollReveal<HTMLDivElement>({ threshold: 0.05, delay: 100 });
 
   const handleSearch = () => setSearch(searchInput);
 
@@ -214,58 +221,82 @@ function ProductsContent() {
                 </button>
               </div>
               <div className={cn("grid gap-4 lg:gap-6", gridSize === 2 && "grid-cols-1 sm:grid-cols-2", gridSize === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3", gridSize === 4 && "grid-cols-2 lg:grid-cols-4")}>
-                {filteredProducts.map((product) => (
-                  <Card key={product.id} hover glow className="group overflow-hidden">
-                    <Link href={`/tai-khoan/${product.slug || product.id}`}>
-                      <div className="relative">
-                        <div className="aspect-square overflow-hidden rounded-t-[18px] bg-[#1F2937]">
-                          <img
-                            src={(product as any).thumbnail || (product as any).images?.[0] || "/placeholder.jpg"}
-                            alt={product.name}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
-                        </div>
-                        {(product as any).badge && (
-                          <Badge
-                            variant={((product as any).badge === "BEST_SELLER" ? "orange" : (product as any).badge === "HOT" ? "error" : "purple")}
-                            className="absolute left-3 top-3"
-                          >
-                            {((product as any).badge === "BEST_SELLER" ? "🔥 Best" : (product as any).badge === "HOT" ? "🔥 Hot" : "⭐ Premium")}
-                          </Badge>
-                        )}
-                        <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1">
-                          <Star className="h-3 w-3 fill-[#F59E0B] text-[#F59E0B]" />
-                          <span className="text-xs font-medium text-white">{(product as any).rating || "4.8"}</span>
-                        </div>
-                      </div>
-                    </Link>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-sora text-sm font-semibold text-white line-clamp-1">{product.name}</h3>
-                          <p className="text-xs text-[#64748B]">{product.category?.name || (product as any).categoryName || ""}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-sora text-base font-bold text-[#3B82F6]">{formatCurrency(product.price)}</p>
-                          {product.originalPrice > 0 && product.originalPrice !== product.price && (
-                            <p className="text-xs text-[#64748B] line-through">{formatCurrency(product.originalPrice)}</p>
+                {filteredProducts.map((product, index) => {
+                  const isGif = ((product as any).thumbnail || (product as any).images?.[0] || "").toLowerCase().includes(".gif");
+                  const imageSrc = (product as any).thumbnail || (product as any).images?.[0] || "/placeholder.jpg";
+                  return (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={productsRef.isVisible ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.4, delay: index * 0.03 }}
+                    whileHover={{ y: -4 }}
+                  >
+                    <Card hover glow className="overflow-hidden h-full group">
+                      <Link href={`/tai-khoan/${product.slug || product.id}`}>
+                        <div className="relative aspect-square overflow-hidden rounded-t-[18px] bg-[#1F2937]">
+                          {/* Shine effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 -translate-x-full group-hover:translate-x-full" />
+
+                          {isGif ? (
+                            <img
+                              src={imageSrc}
+                              alt={product.name}
+                              className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-110"
+                            />
+                          ) : (
+                            <Image
+                              src={imageSrc}
+                              alt={product.name}
+                              fill
+                              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                              className="object-contain p-4 transition-transform duration-300 group-hover:scale-110"
+                              loading="lazy"
+                            />
                           )}
+                          {(product as any).badge && (
+                            <Badge
+                              variant={((product as any).badge === "BEST_SELLER" ? "orange" : (product as any).badge === "HOT" ? "error" : "purple")}
+                              className="absolute left-3 top-3 z-10"
+                            >
+                              {((product as any).badge === "BEST_SELLER" ? "🔥 Best" : (product as any).badge === "HOT" ? "🔥 Hot" : "⭐ Premium")}
+                            </Badge>
+                          )}
+                          <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 group-hover:scale-105 transition-transform">
+                            <Star className="h-3 w-3 fill-[#F59E0B] text-[#F59E0B]" />
+                            <span className="text-xs font-medium text-white">{(product as any).rating || "4.8"}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-[#94A3B8]">Còn {product.stock}</span>
-                          <button
-                            onClick={() => handleAddToCart(product)}
-                            className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#3B82F6]/10 text-[#3B82F6] transition-all hover:bg-[#3B82F6] hover:text-white"
-                          >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          </button>
+                      </Link>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-sora text-sm font-semibold text-white line-clamp-1 group-hover:text-[#60A5FA] transition-colors">{product.name}</h3>
+                            <p className="text-xs text-[#64748B]">{product.category?.name || (product as any).categoryName || ""}</p>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-sora text-base font-bold text-[#3B82F6] group-hover:scale-105 transition-transform inline-block">{formatCurrency(product.price)}</p>
+                            {product.originalPrice > 0 && product.originalPrice !== product.price && (
+                              <p className="text-xs text-[#64748B] line-through">{formatCurrency(product.originalPrice)}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-[#94A3B8]">Còn {product.stock}</span>
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#3B82F6]/10 text-[#3B82F6] transition-all hover:bg-[#3B82F6] hover:text-white"
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                  );
+                })}
               </div>
 
               {filteredProducts.length === 0 && (
@@ -305,13 +336,21 @@ function ProductsLoading() {
 }
 
 export default function ProductsPage() {
+  const headerRef = useScrollReveal<HTMLDivElement>({ threshold: 0.2 });
+
   return (
     <div className="min-h-screen py-8">
       <div className="mx-auto max-w-[1200px] px-4 lg:px-6">
-        <div className="mb-8">
+        <motion.div
+          ref={headerRef.ref}
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={headerRef.isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+        >
           <h1 className="font-sora text-3xl font-bold text-white mb-2">Danh sách sản phẩm</h1>
           <p className="text-[#94A3B8]">Khám phá và mua tài khoản chất lượng cao</p>
-        </div>
+        </motion.div>
         <Suspense fallback={<ProductsLoading />}>
           <ProductsContent />
         </Suspense>

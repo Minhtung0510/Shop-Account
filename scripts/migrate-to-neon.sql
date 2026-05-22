@@ -333,6 +333,55 @@ INSERT INTO "WebhookLog" ("id", "provider", "externalId", "createdAt") VALUES
 ('cmpdj86d80002t56schvrvj8n', 'sepay', '0', '2026-05-20T03:58:43.0040000');
 
 -- =============================================================================
+-- UPDATE GIF URLs từ Giphy (hoạt động 100%)
+-- =============================================================================
+
+-- Netflix
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExMmV0dnF5NnY4bzZ5eHcyc3hsOGhqc3p5d2F4NHo2Z3M0dGRtNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ori0NK5J4fCXrboRW/giphy.gif'
+WHERE slug LIKE 'netflix%';
+
+-- YouTube
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExcmVkcHV0YnY5aWZ5bDdhOGV0dWNwdzVtdzh0OG9wZnF4OGp6N2Z3ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ori0B1O7qHtwO2k2S/giphy.gif'
+WHERE slug LIKE 'youtube%';
+
+-- Spotify
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExeTd0cHhsOWJydHV5eXBwY3hqaDZlNWd4MTRmY3Y1dGQ3NjV5cCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/JT4SdUHvPd2b4/giphy.gif'
+WHERE slug LIKE 'spotify%';
+
+-- Canva
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExdDF5OG1tMnlzMnV0OW14a3hwNnl5aHl4aXU2NWRsd3o4OGZ2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7btPCcdNniWF0fuQ/giphy.gif'
+WHERE slug LIKE 'canva%';
+
+-- Disney+
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExY2o1dnF4OW5qcmY5aXBwOGd0N2h0YXJ1dDRnOGd2NnM3cHpoNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKoHtCNG1WMEOuY/giphy.gif'
+WHERE slug LIKE 'disney%';
+
+-- Discord
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExeTd2ZTFhN2t1b2o5c3o5OGdqcGR0OW1oN2c5eTRzOGd2dHpoZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vNqQJIVpwy0cE/giphy.gif'
+WHERE slug LIKE 'discord%';
+
+-- TikTok
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExdWc5cXk5Y2E5aHBwN3o4OGV0dWNwdzVtbzY5c2c5OGdqcGR0OWZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7qEATmDVL6J7xKMo/giphy.gif'
+WHERE slug LIKE 'tiktok%';
+
+-- CapCut
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExdWc5cXk5Y2E5aHBwN3o4OGV0dWNwdzVtbzY5c2c5OGdqcGR0OWZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vNqQ9TmCQLCLu/giphy.gif'
+WHERE slug LIKE 'capcut%';
+
+-- ChatGPT
+UPDATE "Product"
+SET thumbnail = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3YXExMnV0dnF5NnY4bzZ5eHcyc3hsOGhqc3p5d2F4NHo2Z3M0dGRtNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/v1nFEaM2c8qzO/giphy.gif'
+WHERE slug LIKE 'chatgpt%';
+
+-- =============================================================================
 -- HOÀN TẤT
 -- =============================================================================
 SELECT 'Migration completed successfully!' AS status;

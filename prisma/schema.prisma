@@ -32,6 +32,59 @@ model User {
   topupTransactions  TopupTransaction[]
   serviceOrders     ServiceOrder[]
   warranties        Warranty[]
+  auditLogs         AuditLog[]
+  userRoles         UserRole[]
+}
+
+// ============ AUDIT LOG ============
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entityType  String   // users, products, orders, etc.
+  entityId    String?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ============ ROLES & PERMISSIONS ============
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  level       Int      @default(5) // 1=SuperAdmin, 2=Admin, 3=Moderator, 4=Staff, 5=User
+  description String?
+  permissions Json     @default("[]")
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userRoles UserRole[]
+
+  @@index([name])
+  @@index([level])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
 }
 
 model AccountInventory {

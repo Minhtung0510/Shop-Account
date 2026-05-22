@@ -92,6 +92,11 @@ async function main() {
       update: {},
       create: { name: "TikTok", slug: "tiktok", icon: "🎵", productCount: 12 },
     }),
+    db.category.upsert({
+      where: { slug: "instagram" },
+      update: {},
+      create: { name: "Instagram", slug: "instagram", icon: "📷", productCount: 8 },
+    }),
   ]);
   console.log(`${categories.length} categories created`);
 
@@ -107,6 +112,12 @@ async function main() {
     { name: "ChatGPT Plus 1 tháng", slug: "chatgpt-plus-1-thang", price: 150000, originalPrice: 200000, categorySlug: "chatgpt", stock: 30, rating: 4.9, sold: 4500, badge: "HOT" },
     { name: "Disney+ Premium 1 tháng", slug: "disney-premium-1-thang", price: 59000, originalPrice: 99000, categorySlug: "disney", stock: 38, rating: 4.8, sold: 6200, badge: "HOT" },
     { name: "CapCut Pro 1 năm", slug: "capcut-pro-1-nam", price: 35000, categorySlug: "capcut", stock: 20, rating: 4.6, sold: 4100, badge: "NEW" },
+    // TikTok Products
+    { name: "TikTok Premium 1 tháng", slug: "tiktok-premium-1-thang", price: 39000, categorySlug: "tiktok", stock: 12, rating: 4.7, sold: 3200, badge: "HOT" },
+    { name: "TikTok Premium 3 tháng", slug: "tiktok-premium-3-thang", price: 99000, categorySlug: "tiktok", stock: 8, rating: 4.8, sold: 1800, badge: null },
+    // Instagram Products
+    { name: "Instagram Followers 1000", slug: "instagram-followers-1000", price: 45000, categorySlug: "instagram", stock: 50, rating: 4.6, sold: 2500, badge: "BEST_SELLER" },
+    { name: "Instagram Likes 5000", slug: "instagram-likes-5000", price: 35000, categorySlug: "instagram", stock: 50, rating: 4.5, sold: 1800, badge: null },
   ];
 
   const productImages: Record<string, string> = {
@@ -120,6 +131,12 @@ async function main() {
     "chatgpt-plus-1-thang": "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
     "disney-premium-1-thang": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
     "capcut-pro-1-nam": "https://images.unsplash.com/photo-1635776062043-223faf322554?w=400&h=400&fit=crop",
+    // TikTok
+    "tiktok-premium-1-thang": "https://picsum.photos/seed/tiktok1/400/400",
+    "tiktok-premium-3-thang": "https://picsum.photos/seed/tiktok2/400/400",
+    // Instagram
+    "instagram-followers-1000": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
+    "instagram-likes-5000": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
   };
 
   for (const p of products) {
@@ -161,9 +178,15 @@ async function main() {
     { name: "Mở khóa TikTok", slug: "mo-khoa-tiktok", icon: "🔓", description: "Mở khóa tài khoản TikTok nhanh chóng.", price: 500000, category: "TikTok" },
     { name: "Report TikTok", slug: "report-tiktok", icon: "🚫", description: "Report tài khoản TikTok hiệu quả.", price: 500000, category: "TikTok" },
     { name: "Kháng nghị livestream TikTok", slug: "khang-nghi-livestream-tiktok", icon: "📺", description: "Kháng nghị livestream TikTok bị banned.", price: 500000, category: "TikTok" },
+    { name: "Tăng view TikTok", slug: "tang-view-tiktok", icon: "👁️", description: "Tăng lượt xem video TikTok nhanh chóng.", price: 10000, category: "TikTok" },
+    { name: "Tăng tim/chất như Like TikTok", slug: "tang-like-tiktok", icon: "❤️", description: "Tăng tim và chất như like video TikTok.", price: 15000, category: "TikTok" },
+    { name: "Tăng follow TikTok", slug: "tang-follow-tiktok", icon: "👥", description: "Tăng người theo dõi TikTok chất lượng.", price: 50000, category: "TikTok" },
     // Instagram
     { name: "Tích xanh Instagram", slug: "tich-xanh-instagram", icon: "✅", description: "Xin tích xanh (verified) Instagram uy tín.", price: 500000, category: "Instagram" },
     { name: "Mở khóa Instagram", slug: "mo-khoa-instagram", icon: "🔓", description: "Mở khóa tài khoản Instagram nhanh chóng.", price: 500000, category: "Instagram" },
+    { name: "Tăng view/reel Instagram", slug: "tang-view-instagram", icon: "👁️", description: "Tăng lượt xem video/reel Instagram.", price: 10000, category: "Instagram" },
+    { name: "Tăng like Instagram", slug: "tang-like-instagram", icon: "❤️", description: "Tăng lượt thích bài viết Instagram.", price: 15000, category: "Instagram" },
+    { name: "Tăng follow Instagram", slug: "tang-follow-instagram", icon: "👥", description: "Tăng người theo dõi Instagram chất lượng.", price: 50000, category: "Instagram" },
   ];
 
   for (const s of services) {

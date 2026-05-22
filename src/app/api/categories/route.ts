@@ -9,7 +9,11 @@ export async function GET() {
     const categories = await db.category.findMany({
       orderBy: { createdAt: "asc" },
     });
-    return NextResponse.json(categories);
+    return NextResponse.json(categories, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Categories GET error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });

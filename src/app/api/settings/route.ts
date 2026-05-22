@@ -10,7 +10,11 @@ export async function GET() {
     for (const s of settings) {
       map[s.key] = s.value;
     }
-    return NextResponse.json(map);
+    return NextResponse.json(map, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Settings public GET error:", error);
     return NextResponse.json({}, { status: 200 });

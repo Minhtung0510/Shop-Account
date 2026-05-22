@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -151,11 +152,13 @@ export default function CartPage() {
                   <Card className="!rounded-[16px]">
                     <CardContent className="p-4">
                       <div className="flex gap-4">
-                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-[12px] bg-[#1F2937]">
-                          <img
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-[12px] bg-[#1F2937] relative">
+                          <Image
                             src={item.product.thumbnail}
                             alt={item.product.name}
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="80px"
+                            className="object-cover"
                           />
                         </div>
                         <div className="flex flex-1 flex-col gap-2">
