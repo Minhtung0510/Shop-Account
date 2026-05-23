@@ -271,19 +271,19 @@ function ProductsContent() {
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-sora text-sm font-semibold text-white line-clamp-1 group-hover:text-[#60A5FA] transition-colors">{product.name}</h3>
-                            <p className="text-xs text-[#64748B]">{product.category?.name || (product as any).categoryName || ""}</p>
+                            <h3 className="font-sora text-sm font-semibold text-white truncate group-hover:text-[#60A5FA] transition-colors">{product.name}</h3>
+                            <p className="text-xs text-[#64748B] truncate">{product.category?.name || (product as any).categoryName || ""}</p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-sora text-base font-bold text-[#3B82F6] group-hover:scale-105 transition-transform inline-block">{formatCurrency(product.price)}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-sora text-base font-bold text-[#3B82F6] group-hover:scale-105 transition-transform truncate">{formatCurrency(product.price)}</p>
                             {product.originalPrice > 0 && product.originalPrice !== product.price && (
-                              <p className="text-xs text-[#64748B] line-through">{formatCurrency(product.originalPrice)}</p>
+                              <p className="text-xs text-[#64748B] line-through truncate">{formatCurrency(product.originalPrice)}</p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-[#94A3B8]">Còn {product.stock}</span>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-xs text-[#94A3B8] whitespace-nowrap">Còn {product.stock}</span>
                             <button
                               onClick={() => handleAddToCart(product)}
                               className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#3B82F6]/10 text-[#3B82F6] transition-all hover:bg-[#3B82F6] hover:text-white"

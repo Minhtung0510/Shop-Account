@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 
 interface Particle {
   id: number;
@@ -20,26 +20,39 @@ interface FloatingParticlesProps {
   opacityRange?: [number, number];
 }
 
+function generateParticles(
+  count: number,
+  color: string,
+  sizeRange: [number, number],
+  durationRange: [number, number],
+  opacityRange: [number, number]
+): Particle[] {
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    size: sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]),
+    duration: durationRange[0] + Math.random() * (durationRange[1] - durationRange[0]),
+    delay: Math.random() * 20,
+    opacity: opacityRange[0] + Math.random() * (opacityRange[1] - opacityRange[0]),
+    color,
+  }));
+}
+
 export function FloatingParticles({
   count = 30,
   color = "#3B82F6",
-  sizeRange = [2, 6],
-  durationRange = [15, 30],
-  opacityRange = [0.3, 0.8],
+  sizeRange = [2, 6] as [number, number],
+  durationRange = [15, 30] as [number, number],
+  opacityRange = [0.3, 0.8] as [number, number],
 }: FloatingParticlesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const particles = useMemo<Particle[]>(() => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      size: sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]),
-      duration: durationRange[0] + Math.random() * (durationRange[1] - durationRange[0]),
-      delay: Math.random() * 20,
-      opacity: opacityRange[0] + Math.random() * (opacityRange[1] - opacityRange[0]),
-      color,
-    }));
-  }, [count, color, sizeRange, durationRange, opacityRange]);
+  
+  // Memoize particles to prevent re-generation on every render
+  const particles = useMemo(() => 
+    generateParticles(count, color, sizeRange, durationRange, opacityRange),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // Only generate once on mount
+  );
 
   return (
     <div
@@ -52,12 +65,15 @@ export function FloatingParticles({
           key={particle.id}
           className="particle"
           style={{
+            position: "absolute",
+            top: "-10px",
             left: `${particle.x}%`,
             width: particle.size,
             height: particle.size,
+            borderRadius: "50%",
             background: `radial-gradient(circle, ${particle.color} 0%, transparent 70%)`,
             opacity: particle.opacity,
-            animationDuration: `${particle.duration}s`,
+            animation: `float-particle ${particle.duration}s ease-in-out infinite`,
             animationDelay: `${particle.delay}s`,
             boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
           }}

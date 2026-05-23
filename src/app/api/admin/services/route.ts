@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const services = await db.service.findMany({
       orderBy: { createdAt: "desc" },
@@ -24,10 +22,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const body = await req.json();
     const { name, icon, description, price, category, status } = body;
@@ -59,10 +55,8 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const body = await req.json();
     const { id, name, icon, description, price, category, status } = body;
@@ -97,10 +91,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

@@ -16,7 +16,11 @@ function verifySepayAuth(request: Request): boolean {
   const secret =
     process.env.SEPAY_WEBHOOK_API_KEY ||
     process.env.BANKING_WEBHOOK_SECRET;
-  if (!secret) return true;
+
+  if (!secret) {
+    console.error("[SePay webhook] CRITICAL: No webhook secret configured! Rejecting all requests.");
+    return false;
+  }
 
   const auth = request.headers.get("authorization") || "";
   const apiKey = auth.replace(/^Apikey\s+/i, "").trim();

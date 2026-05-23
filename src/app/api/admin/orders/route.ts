@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/require-auth";
+import { createAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const [orders, serviceOrders] = await Promise.all([
       db.order.findMany({
@@ -61,7 +60,7 @@ export async function GET() {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
-    return NextResponse.json(all);
+    return NextResponse.json(JSON.parse(JSON.stringify(all)));
   } catch (error) {
     console.error("Admin orders API error:", error);
     return NextResponse.json({ error: "Lỗi server" }, { status: 500 });
@@ -70,10 +69,10 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
 
     const body = await req.json();
     const { id, type, status } = body;
@@ -93,6 +92,14 @@ export async function PATCH(req: NextRequest) {
         data: { status },
       });
     }
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: "UPDATE",
+      entityType: "orders",
+      entityId: id,
+      newValues: { type, status },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

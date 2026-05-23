@@ -42,14 +42,40 @@ interface AuditLog {
   user: { id: string; username: string; email: string } | null;
 }
 
+const ENTITY_TYPES = [
+  { value: "", label: "Tất cả đối tượng" },
+  { value: "users", label: "Người dùng" },
+  { value: "roles", label: "Vai trò" },
+  { value: "products", label: "Sản phẩm" },
+  { value: "orders", label: "Đơn hàng" },
+  { value: "transactions", label: "Giao dịch" },
+  { value: "settings", label: "Cài đặt" },
+];
+
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
+  const [entityFilter, setEntityFilter] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
+  const [stats, setStats] = useState<{ totalLogs: number; todayLogs: number; thisWeekLogs: number; actionCounts: Record<string, number> } | null>(null);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/admin/audit-logs/stats");
+      const data = await res.json();
+      if (data.data) {
+        setStats(data.data);
+        setTodayCount(data.data.todayLogs);
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
+    }
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -58,6 +84,7 @@ export default function AuditLogsPage() {
       params.set("page", page.toString());
       params.set("limit", "20");
       if (actionFilter) params.set("action", actionFilter);
+      if (entityFilter) params.set("entityType", entityFilter);
 
       const res = await fetch(`/api/admin/audit-logs?${params.toString()}`);
       const data = await res.json();
@@ -75,8 +102,12 @@ export default function AuditLogsPage() {
   };
 
   useEffect(() => {
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
     fetchLogs();
-  }, [page, actionFilter]);
+  }, [page, actionFilter, entityFilter]);
 
   const filteredLogs = logs.filter((log) => {
     if (!search) return true;
@@ -127,8 +158,9 @@ export default function AuditLogsPage() {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {[
-              { label: "Tổng log", value: total.toLocaleString() },
-              { label: "Hôm nay", value: logs.filter(l => new Date(l.createdAt).toDateString() === new Date().toDateString()).length.toString() },
+              { label: "Tổng log", value: stats?.totalLogs?.toLocaleString() || total.toLocaleString() },
+              { label: "Hôm nay", value: todayCount.toLocaleString() },
+              { label: "Tuần này", value: stats?.thisWeekLogs?.toLocaleString() || "0" },
               { label: "Trang", value: `${page}/${totalPages}` },
             ].map((stat) => (
               <Card key={stat.label} className="!rounded-[12px] bg-[#0F172A] border-[#1E293B]">
@@ -156,6 +188,12 @@ export default function AuditLogsPage() {
                   <option value="">Tất cả hành động</option>
                   {Object.entries(ACTION_CONFIG).map(([action, config]) => (
                     <option key={action} value={action}>{config.label}</option>
+                  ))}
+                </select>
+                <select value={entityFilter} onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
+                  className="px-3 py-2 rounded-[8px] bg-[#1E293B] border border-[#334155] text-white text-sm">
+                  {ENTITY_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
                 </select>
               </div>

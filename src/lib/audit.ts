@@ -1,8 +1,10 @@
 "use server";
 
 import { db } from "./db";
+import { auth } from "./auth";
 import { headers } from "next/headers";
 import type { AuditAction, EntityType, AuditLogFilter } from "@/types";
+import type { Prisma } from "@prisma/client";
 
 interface CreateAuditLogParams {
   userId?: string;
@@ -16,6 +18,21 @@ interface CreateAuditLogParams {
 
 export async function createAuditLog(params: CreateAuditLogParams) {
   try {
+    // Only log if userId is provided and user is ADMIN
+    if (!params.userId) {
+      return { success: false, error: "userId is required for admin audit logging" };
+    }
+
+    // Check if user is ADMIN
+    const user = await db.user.findUnique({
+      where: { id: params.userId },
+      select: { role: true },
+    });
+
+    if (!user || user.role !== "ADMIN") {
+      return { success: false, skipped: true };
+    }
+
     const headersList = await headers();
     const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "unknown";
     const userAgent = headersList.get("user-agent") || "unknown";
@@ -26,11 +43,11 @@ export async function createAuditLog(params: CreateAuditLogParams) {
         action: params.action,
         entityType: params.entityType,
         entityId: params.entityId,
-        oldValues: params.oldValues,
-        newValues: params.newValues,
+        oldValues: params.oldValues as Prisma.InputJsonValue | undefined,
+        newValues: params.newValues as Prisma.InputJsonValue | undefined,
         ipAddress: ipAddress,
         userAgent: userAgent,
-        metadata: params.metadata,
+        metadata: params.metadata as Prisma.InputJsonValue | undefined,
       },
     });
 
@@ -74,7 +91,7 @@ export async function getAuditLogs(filter: AuditLogFilter = {}) {
           user: {
             select: {
               id: true,
-              name: true,
+              username: true,
               email: true,
             },
           },
@@ -110,7 +127,7 @@ export async function getAuditLogById(id: string) {
         user: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
           },
         },
@@ -137,7 +154,7 @@ export async function getRecentAuditLogs(limit: number = 10) {
         user: {
           select: {
             id: true,
-            name: true,
+            username: true,
             email: true,
           },
         },

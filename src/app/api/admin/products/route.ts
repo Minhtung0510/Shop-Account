@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/require-auth";
+import { createAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,10 @@ function slugify(text: string): string {
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-    }
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
 
     const products = await db.product.findMany({
       include: {
@@ -53,10 +54,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
 
     const body = await req.json();
     const { name, description, price, originalPrice, categoryId, thumbnail, images, stock, badge, status } = body;
@@ -90,6 +91,14 @@ export async function POST(req: NextRequest) {
       data: { productCount: { increment: 1 } },
     });
 
+    await createAuditLog({
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "products",
+      entityId: product.id,
+      newValues: { name, price, categoryId },
+    });
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Create product error:", error);
@@ -99,10 +108,10 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
 
     const body = await req.json();
     const { id, name, description, price, originalPrice, categoryId, thumbnail, images, stock, badge, status } = body;
@@ -136,6 +145,15 @@ export async function PUT(req: NextRequest) {
       await db.category.update({ where: { id: categoryId }, data: { productCount: { increment: 1 } } });
     }
 
+    await createAuditLog({
+      userId: session.user.id,
+      action: "UPDATE",
+      entityType: "products",
+      entityId: id,
+      oldValues: { name: existing.name, price: existing.price },
+      newValues: { name, price, categoryId },
+    });
+
     return NextResponse.json(product);
   } catch (error) {
     console.error("Update product error:", error);
@@ -145,10 +163,10 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -167,6 +185,14 @@ export async function DELETE(req: NextRequest) {
     await db.category.update({
       where: { id: existing.categoryId },
       data: { productCount: { decrement: 1 } },
+    });
+
+    await createAuditLog({
+      userId: session.user.id,
+      action: "DELETE",
+      entityType: "products",
+      entityId: id,
+      oldValues: { name: existing.name },
     });
 
     return NextResponse.json({ success: true });

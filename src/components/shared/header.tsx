@@ -65,12 +65,13 @@ export function Header() {
     setMounted(true);
   }, [pathname]);
 
-  // Chỉ fetch user khi chưa có data hoặc force refresh
+  // Fetch user data on mount and pathname change
   useEffect(() => {
-    if (!userFromStore) {
-      fetchUser();
-    }
-  }, []);
+    fetchUser();
+  }, [pathname]);
+
+  // Force re-render when user state changes
+  const isLoggedIn = mounted && userFromStore && userFromStore.id;
 
   const navItems = publicNavItems;
 
@@ -196,7 +197,7 @@ export function Header() {
               </button>
 
               {/* Auth Section */}
-              {mounted && userFromStore ? (
+              {isLoggedIn ? (
                 <div
                   onMouseEnter={() => setIsUserMenuOpen(true)}
                   onMouseLeave={() => setIsUserMenuOpen(false)}
@@ -208,13 +209,13 @@ export function Header() {
                   >
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
                       <span className="text-xs font-bold text-white">
-                        {userFromStore.name?.[0]?.toUpperCase() || "U"}
+                        {userFromStore?.name?.[0]?.toUpperCase() || "U"}
                       </span>
                     </div>
                     <div className="hidden sm:block text-left">
-                      <p className="text-xs font-medium text-white">{userFromStore.name}</p>
+                      <p className="text-xs font-medium text-white">{userFromStore?.name}</p>
                       <p className="text-[10px] text-[#94A3B8]">
-                        {formatCurrency(userFromStore.balance || 0)}
+                        {formatCurrency(userFromStore?.balance || 0)}
                       </p>
                     </div>
                     <ChevronDown className={cn(

@@ -17,7 +17,11 @@ type CassoV2Payload = {
 
 function verifyCassoToken(request: Request): boolean {
   const secret = process.env.CASSO_WEBHOOK_SECRET || process.env.BANKING_WEBHOOK_SECRET;
-  if (!secret) return true;
+
+  if (!secret) {
+    console.error("[Casso webhook] CRITICAL: No webhook secret configured! Rejecting all requests.");
+    return false;
+  }
 
   const token =
     request.headers.get("secure-token") ||

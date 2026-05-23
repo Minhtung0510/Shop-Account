@@ -4,41 +4,58 @@ import bcrypt from "bcryptjs";
 async function main() {
   console.log("Starting seed...");
 
-  // Create admin user
-  const adminPassword = await bcrypt.hash("admin123", 12);
-  const admin = await db.user.upsert({
-    where: { email: "admin@shopaccount.vn" },
-    update: {},
-    create: {
+  // =====================================
+  // 1. CREATE TEST USERS
+  // =====================================
+  console.log("Creating test users...");
+
+  const testUsers = [
+    {
       email: "admin@shopaccount.vn",
       username: "admin",
-      password: adminPassword,
+      password: "Admin123@",
       phone: "0901234567",
       role: "ADMIN",
-      balance: 0,
+      balance: 10000000,
       rank: "Admin",
-      emailVerified: new Date(),
     },
-  });
-  console.log("Admin user created:", admin.email);
-
-  // Create demo user
-  const userPassword = await bcrypt.hash("user123", 12);
-  const user = await db.user.upsert({
-    where: { email: "user@example.com" },
-    update: {},
-    create: {
-      email: "user@example.com",
-      username: "nguyenvana",
-      password: userPassword,
+    {
+      email: "user@shopaccount.vn",
+      username: "nguoimua",
+      password: "User123@",
       phone: "0987654321",
       role: "USER",
       balance: 2500000,
       rank: "Gold",
-      emailVerified: new Date(),
     },
-  });
-  console.log("Demo user created:", user.email);
+  ];
+
+  for (const userData of testUsers) {
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    const user = await db.user.upsert({
+      where: { email: userData.email },
+      update: {
+        username: userData.username,
+        password: hashedPassword,
+        phone: userData.phone,
+        role: userData.role,
+        balance: userData.balance,
+        rank: userData.rank,
+      },
+      create: {
+        email: userData.email,
+        username: userData.username,
+        password: hashedPassword,
+        phone: userData.phone,
+        role: userData.role,
+        balance: userData.balance,
+        rank: userData.rank,
+        emailVerified: new Date(),
+      },
+    });
+    console.log(`  - ${user.email} (${user.role}) - Password: ${userData.password}`);
+  }
+  console.log(`${testUsers.length} users seeded successfully!`);
 
   // Create categories
   const categories = await Promise.all([
@@ -112,10 +129,8 @@ async function main() {
     { name: "ChatGPT Plus 1 tháng", slug: "chatgpt-plus-1-thang", price: 150000, originalPrice: 200000, categorySlug: "chatgpt", stock: 30, rating: 4.9, sold: 4500, badge: "HOT" },
     { name: "Disney+ Premium 1 tháng", slug: "disney-premium-1-thang", price: 59000, originalPrice: 99000, categorySlug: "disney", stock: 38, rating: 4.8, sold: 6200, badge: "HOT" },
     { name: "CapCut Pro 1 năm", slug: "capcut-pro-1-nam", price: 35000, categorySlug: "capcut", stock: 20, rating: 4.6, sold: 4100, badge: "NEW" },
-    // TikTok Products
     { name: "TikTok Premium 1 tháng", slug: "tiktok-premium-1-thang", price: 39000, categorySlug: "tiktok", stock: 12, rating: 4.7, sold: 3200, badge: "HOT" },
     { name: "TikTok Premium 3 tháng", slug: "tiktok-premium-3-thang", price: 99000, categorySlug: "tiktok", stock: 8, rating: 4.8, sold: 1800, badge: null },
-    // Instagram Products
     { name: "Instagram Followers 1000", slug: "instagram-followers-1000", price: 45000, categorySlug: "instagram", stock: 50, rating: 4.6, sold: 2500, badge: "BEST_SELLER" },
     { name: "Instagram Likes 5000", slug: "instagram-likes-5000", price: 35000, categorySlug: "instagram", stock: 50, rating: 4.5, sold: 1800, badge: null },
   ];
@@ -127,14 +142,12 @@ async function main() {
     "spotify-family-1-thang": "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
     "canva-pro-1-nam": "https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg",
     "youtube-premium-6-thang": "https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg",
-    "discord-nitro-1-thang": "https://upload.wikimedia.org/wikipedia/en/9/98/Discord_logo.svg",
+    "discord-nitro-1-thang": "https://upload.wikimedia.org/wikipedia/commons/en/9/98/Discord_logo.svg",
     "chatgpt-plus-1-thang": "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg",
     "disney-premium-1-thang": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg",
     "capcut-pro-1-nam": "https://images.unsplash.com/photo-1635776062043-223faf322554?w=400&h=400&fit=crop",
-    // TikTok
     "tiktok-premium-1-thang": "https://picsum.photos/seed/tiktok1/400/400",
     "tiktok-premium-3-thang": "https://picsum.photos/seed/tiktok2/400/400",
-    // Instagram
     "instagram-followers-1000": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
     "instagram-likes-5000": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg",
   };
@@ -166,7 +179,6 @@ async function main() {
 
   // Create services
   const services = [
-    // Facebook
     { name: "Khôi phục mật khẩu Facebook", slug: "khoi-phuc-mat-khau-facebook", icon: "🔑", description: "Khôi phục mật khẩu Facebook nhanh chóng, an toàn.", price: 500000, category: "Facebook" },
     { name: "Report tài khoản cá nhân Facebook", slug: "report-tai-khoan-ca-nhan-facebook", icon: "🚫", description: "Report tài khoản cá nhân Facebook nhanh chóng.", price: 500000, category: "Facebook" },
     { name: "Report Fanpage Facebook", slug: "report-fanpage-facebook", icon: "📘", description: "Report Fanpage Facebook hiệu quả.", price: 500000, category: "Facebook" },
@@ -174,14 +186,12 @@ async function main() {
     { name: "Mở checkpoint Facebook", slug: "mo-checkpoint-facebook", icon: "🔓", description: "Mở checkpoint Facebook an toàn, không mất tài khoản.", price: 500000, category: "Facebook" },
     { name: "Mở khóa tài khoản Facebook", slug: "mo-khoa-tai-khoan-facebook", icon: "🔐", description: "Mở khóa tài khoản Facebook nhanh chóng.", price: 500000, category: "Facebook" },
     { name: "Hỗ trợ BM Facebook", slug: "ho-tro-bm-facebook", icon: "💼", description: "Hỗ trợ quản lý Business Manager Facebook.", price: 500000, category: "Facebook" },
-    // TikTok
     { name: "Mở khóa TikTok", slug: "mo-khoa-tiktok", icon: "🔓", description: "Mở khóa tài khoản TikTok nhanh chóng.", price: 500000, category: "TikTok" },
     { name: "Report TikTok", slug: "report-tiktok", icon: "🚫", description: "Report tài khoản TikTok hiệu quả.", price: 500000, category: "TikTok" },
     { name: "Kháng nghị livestream TikTok", slug: "khang-nghi-livestream-tiktok", icon: "📺", description: "Kháng nghị livestream TikTok bị banned.", price: 500000, category: "TikTok" },
     { name: "Tăng view TikTok", slug: "tang-view-tiktok", icon: "👁️", description: "Tăng lượt xem video TikTok nhanh chóng.", price: 10000, category: "TikTok" },
     { name: "Tăng tim/chất như Like TikTok", slug: "tang-like-tiktok", icon: "❤️", description: "Tăng tim và chất như like video TikTok.", price: 15000, category: "TikTok" },
     { name: "Tăng follow TikTok", slug: "tang-follow-tiktok", icon: "👥", description: "Tăng người theo dõi TikTok chất lượng.", price: 50000, category: "TikTok" },
-    // Instagram
     { name: "Tích xanh Instagram", slug: "tich-xanh-instagram", icon: "✅", description: "Xin tích xanh (verified) Instagram uy tín.", price: 500000, category: "Instagram" },
     { name: "Mở khóa Instagram", slug: "mo-khoa-instagram", icon: "🔓", description: "Mở khóa tài khoản Instagram nhanh chóng.", price: 500000, category: "Instagram" },
     { name: "Tăng view/reel Instagram", slug: "tang-view-instagram", icon: "👁️", description: "Tăng lượt xem video/reel Instagram.", price: 10000, category: "Instagram" },

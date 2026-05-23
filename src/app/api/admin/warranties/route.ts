@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
@@ -33,10 +31,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const body = await req.json();
     const { orderId, orderType, productName, issue } = body;
@@ -47,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const warranty = await db.warranty.create({
       data: {
-        userId: session.user.id,
+        userId: req.headers.get("x-user-id") || "",
         orderId,
         orderType,
         productName,
@@ -64,10 +60,8 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const body = await req.json();
     const { id, status, adminNote } = body;

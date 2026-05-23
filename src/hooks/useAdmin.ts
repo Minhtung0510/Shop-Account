@@ -126,12 +126,18 @@ const USER_ME_KEY = ["user", "me"] as const;
 export function useAdminUsers() {
   return useQuery<AdminUser[]>({
     queryKey: [...ADMIN_KEY, "users"],
-    queryFn: () =>
-      fetch("/api/admin/users")
-        .then((r) => {
-          if (!r.ok) throw new Error("Fetch failed");
-          return r.json();
-        }),
+    queryFn: async () => {
+      const r = await fetch("/api/admin/users");
+      const data = await r.json();
+      if (!r.ok || data.error) {
+        throw new Error(data.error || "Failed to fetch users");
+      }
+      // Normalize: API returns username but page expects name
+      return (data.users || []).map((u: Record<string, unknown>) => ({
+        ...u,
+        name: (u.username as string) || (u.name as string) || "N/A",
+      }));
+    },
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
   });
@@ -141,15 +147,19 @@ export function useUpdateUser() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      fetch("/api/admin/users", {
+    mutationFn: (data: Record<string, unknown>) => {
+      // API expects userId, not id
+      const { id, ...rest } = data;
+      const payload = { userId: id, ...rest };
+      return fetch("/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       }).then((r) => {
         if (!r.ok) throw new Error("Update failed");
         return r.json();
-      }),
+      });
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [...ADMIN_KEY, "users"] });
       qc.invalidateQueries({ queryKey: USER_ME_KEY });
@@ -161,8 +171,8 @@ export function useDeleteUser() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/admin/users?id=${id}`, { method: "DELETE" }).then((r) => {
+    mutationFn: (userId: string) =>
+      fetch(`/api/admin/users?userId=${userId}`, { method: "DELETE" }).then((r) => {
         if (!r.ok) throw new Error("Delete failed");
         return r.json();
       }),
@@ -177,7 +187,14 @@ export function useDeleteUser() {
 export function useAdminOrders() {
   return useQuery<AdminOrder[]>({
     queryKey: [...ADMIN_KEY, "orders"],
-    queryFn: () => fetch("/api/admin/orders").then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/admin/orders");
+      const data = await r.json();
+      if (!r.ok || data.error) {
+        throw new Error(data.error || "Failed to fetch orders");
+      }
+      return data;
+    },
     refetchOnWindowFocus: true,
     staleTime: 30 * 1000,
   });

@@ -102,7 +102,7 @@ export default function CartPage() {
       <div className="min-h-screen flex flex-col items-center justify-center py-12">
         <div className="animate-pulse text-center">
           <ShoppingCart className="h-20 w-20 text-[#334155] mx-auto mb-4" />
-          <p className="text-[#64748B]">�ang tai...</p>
+          <p className="text-[#64748B]">Đang tải...</p>
         </div>
       </div>
     );

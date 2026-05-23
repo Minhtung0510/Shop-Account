@@ -26,19 +26,24 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
+      // Call custom login API to get role and redirect
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      if (result?.error) {
-        setErrors({ form: "Email hoặc mật khẩu không đúng hoặc tài khoản đã bị khoá" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ form: data.error || "Email hoặc mật khẩu không đúng" });
         setLoading(false);
         return;
       }
 
-      router.push("/");
+      // Redirect based on role (admin goes to /adm, others go to /)
+      const redirectUrl = data.redirectUrl || "/";
+      router.push(redirectUrl);
       router.refresh();
     } catch {
       setErrors({ form: "Đã xảy ra lỗi. Vui lòng thử lại." });

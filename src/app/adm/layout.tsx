@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { AdminProviders } from "@/components/providers/admin-providers";
 
 export default async function AdmLayout({
   children,
@@ -13,8 +14,10 @@ export default async function AdmLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#020617]">
-      {children}
-    </div>
+    <AdminProviders>
+      <div className="min-h-screen bg-[#020617]">
+        {children}
+      </div>
+    </AdminProviders>
   );
 }

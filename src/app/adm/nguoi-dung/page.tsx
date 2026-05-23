@@ -4,21 +4,18 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AdminSidebar } from "@/components/shared/admin-sidebar";
 import { formatCurrency } from "@/lib/utils";
 import {
   Search,
   Loader2,
   X,
   Shield,
-  ShieldOff,
   Edit2,
   RefreshCw,
   Lock,
   Unlock,
   Trash2,
-  Crown,
-  UserCog,
-  UserCheck,
   User,
 } from "lucide-react";
 import { useAdminUsers, useUpdateUser, useDeleteUser } from "@/hooks/useAdmin";
@@ -28,7 +25,7 @@ interface AdminUser {
   name: string;
   email: string;
   phone: string;
-  role: "USER" | "MODERATOR" | "ADMIN" | "SUPER_ADMIN";
+  role: "USER" | "ADMIN";
   balance: number;
   rank: string;
   orders: number;
@@ -37,12 +34,9 @@ interface AdminUser {
   created: string;
 }
 
-const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string; level: number }> = {
-  SUPER_ADMIN: { label: "Chủ Shop", icon: Crown, color: "text-[#EF4444]", bg: "bg-[#EF4444]/20", level: 1 },
-  ADMIN: { label: "Quản trị", icon: Shield, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/20", level: 2 },
-  MODERATOR: { label: "Điều hành", icon: UserCog, color: "text-[#3B82F6]", bg: "bg-[#3B82F6]/20", level: 3 },
-  STAFF: { label: "Nhân viên", icon: UserCheck, color: "text-[#10B981]", bg: "bg-[#10B981]/20", level: 4 },
-  USER: { label: "Người dùng", icon: User, color: "text-[#64748B]", bg: "bg-[#64748B]/20", level: 5 },
+const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+  ADMIN: { label: "Quản trị", icon: Shield, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/20" },
+  USER: { label: "Người dùng", icon: User, color: "text-[#64748B]", bg: "bg-[#64748B]/20" },
 };
 
 function EditUserModal({
@@ -128,11 +122,8 @@ function EditUserModal({
               onChange={(e) => setForm({ ...form, role: e.target.value as AdminUser["role"] })}
               className="w-full rounded-[8px] border border-[#1E293B] bg-[#111827] px-3 py-2.5 text-sm text-white focus:border-[#3B82F6] focus:outline-none"
             >
-              {Object.entries(ROLE_CONFIG).map(([role, config]) => (
-                <option key={role} value={role}>
-                  {config.level} - {config.label} ({role})
-                </option>
-              ))}
+              <option value="USER">USER</option>
+              <option value="ADMIN">ADMIN</option>
             </select>
           </div>
           <div>
@@ -168,19 +159,11 @@ export default function AdminUsersPage() {
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
 
-  const handleToggleRole = (user: AdminUser) => {
-    const roles = ["USER", "STAFF", "MODERATOR", "ADMIN", "SUPER_ADMIN"];
-    const currentIndex = roles.indexOf(user.role);
-    const nextRole = roles[(currentIndex + 1) % roles.length];
-    
-    if (!confirm(`Đổi vai trò từ "${ROLE_CONFIG[user.role]?.label}" thành "${ROLE_CONFIG[nextRole]?.label}"?`)) return;
-    updateUser.mutate(
-      { id: user.id, role: nextRole },
-      { onSuccess: () => refetch() }
-    );
-  };
-
   const handleToggleLock = (user: AdminUser) => {
+    if (user.role === "ADMIN") {
+      alert("Không thể khóa Admin!");
+      return;
+    }
     const action = user.isLocked ? "mở khoá" : "khoá";
     if (!confirm(`Bạn có chắc muốn ${action} tài khoản "${user.name}"?`)) return;
     updateUser.mutate(
@@ -190,12 +173,21 @@ export default function AdminUsersPage() {
   };
 
   const handleDelete = (user: AdminUser) => {
-    if (user.role === "SUPER_ADMIN") {
-      alert("Không thể xóa Super Admin!");
+    if (user.role === "ADMIN") {
+      alert("Không thể xóa Admin!");
       return;
     }
     if (!confirm(`Xóa tài khoản "${user.name}"? Hành động không thể hoàn tác.`)) return;
     deleteUser.mutate(user.id, { onSuccess: () => refetch() });
+  };
+
+  const openEditModal = (user: AdminUser) => {
+    if (user.role === "ADMIN") {
+      alert("Không thể chỉnh sửa Admin!");
+      return;
+    }
+    setEditing(user);
+    setShowModal(true);
   };
 
   const filtered = users.filter(
@@ -255,6 +247,7 @@ export default function AdminUsersPage() {
                     {filtered.map((user) => {
                       const roleConfig = ROLE_CONFIG[user.role] || ROLE_CONFIG.USER;
                       const RoleIcon = roleConfig.icon;
+                      const isProtected = user.role === "ADMIN";
 
                       return (
                         <tr key={user.id} className="hover:bg-[#1F2937]/30 transition-colors">
@@ -291,20 +284,39 @@ export default function AdminUsersPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1">
-                              <button onClick={() => { setEditing(user); setShowModal(true); }}
-                                className="flex h-8 w-8 items-center justify-center rounded-[8px] text-[#94A3B8] hover:bg-[#1F2937] hover:text-white transition-colors" title="Chỉnh sửa">
+                              <button 
+                                onClick={() => openEditModal(user)}
+                                className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors ${
+                                  isProtected
+                                    ? "text-[#475569] cursor-not-allowed opacity-50"
+                                    : "text-[#94A3B8] hover:bg-[#1F2937] hover:text-white"
+                                }`} 
+                                title={isProtected ? "Không thể sửa Super Admin" : "Chỉnh sửa"}
+                              >
                                 <Edit2 className="h-4 w-4" />
                               </button>
-                              <button onClick={() => handleToggleLock(user)}
-                                className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors ${user.isLocked ? "text-green-400 hover:bg-green-500/10" : "text-orange-400 hover:bg-orange-500/10"}`} title={user.isLocked ? "Mở khoá" : "Khoá"}>
+                              <button 
+                                onClick={() => handleToggleLock(user)}
+                                className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors ${
+                                  isProtected
+                                    ? "text-[#475569] cursor-not-allowed opacity-50"
+                                    : user.isLocked
+                                      ? "text-green-400 hover:bg-green-500/10"
+                                      : "text-orange-400 hover:bg-orange-500/10"
+                                }`} 
+                                title={isProtected ? "Không thể khóa Super Admin" : user.isLocked ? "Mở khoá" : "Khoá"}
+                              >
                                 {user.isLocked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                               </button>
-                              <button onClick={() => handleToggleRole(user)}
-                                className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors ${roleConfig.color} hover:${roleConfig.bg}`} title="Đổi vai trò">
-                                {user.role === "SUPER_ADMIN" ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                              </button>
-                              <button onClick={() => handleDelete(user)}
-                                className="flex h-8 w-8 items-center justify-center rounded-[8px] text-red-400 hover:bg-red-500/10 transition-colors" title="Xóa">
+                              <button 
+                                onClick={() => handleDelete(user)}
+                                className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-colors ${
+                                  isProtected
+                                    ? "text-[#475569] cursor-not-allowed opacity-50"
+                                    : "text-red-400 hover:bg-red-500/10"
+                                }`} 
+                                title={isProtected ? "Không thể xóa Super Admin" : "Xóa"}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -328,7 +340,10 @@ export default function AdminUsersPage() {
       {showModal && editing && (
         <EditUserModal
           user={editing}
-          onClose={() => { setShowModal(false); setEditing(null); }}
+          onClose={() => {
+            setShowModal(false);
+            setEditing(null);
+          }}
           onSave={() => refetch()}
         />
       )}

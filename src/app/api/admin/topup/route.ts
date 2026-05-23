@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const topups = await db.topupTransaction.findMany({
       include: { user: { select: { username: true, email: true } } },
@@ -39,10 +37,8 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const body = await req.json();
     const { id, action } = body;

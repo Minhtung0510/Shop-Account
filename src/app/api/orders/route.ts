@@ -4,6 +4,17 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 export async function GET() {
   try {
     const session = await auth();
@@ -203,8 +214,8 @@ export async function POST(request: Request) {
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Dich vu</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${serviceIcon} ${serviceName}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Gia</td><td style="padding: 10px; border-bottom: 1px solid #eee; color: #3B82F6; font-weight: bold;">${fmt(servicePrice)}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">SDT Zalo</td><td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="https://zalo.me/${phone}" style="color: #3B82F6;">${phone}</a></td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Telegram</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${telegram || "-"}</td></tr>
-                <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Nguoi dat</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${user.username} (${user.email})</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Telegram</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(telegram || "-")}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Nguoi dat</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(user.username)} (${escapeHtml(user.email)})</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Ma don</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${order.id}</td></tr>
                 <tr><td style="padding: 10px; font-weight: bold;">Thoi gian</td><td style="padding: 10px;">${new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</td></tr>
               </table>

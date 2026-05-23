@@ -1,29 +1,39 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { authorized, response } = await requireAdmin();
+  if (!authorized) return response;
 
   const encoder = new TextEncoder();
+  let isClosed = false;
 
   const stream = new ReadableStream({
-    async start(controller) {
+    start(controller) {
       const sendEvent = (event: string, data: object) => {
-        controller.enqueue(
-          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-        );
+        if (isClosed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch {
+          // Controller already closed, ignore
+        }
       };
 
       const keepAlive = setInterval(() => {
+        if (isClosed) {
+          clearInterval(keepAlive);
+          clearInterval(pollOrders);
+          return;
+        }
         try {
           controller.enqueue(encoder.encode(": keepalive\n\n"));
         } catch {
+          isClosed = true;
           clearInterval(keepAlive);
           clearInterval(pollOrders);
         }
@@ -34,6 +44,11 @@ export async function GET() {
       let lastTopupId: string | null = null;
 
       const pollOrders = setInterval(async () => {
+        if (isClosed) {
+          clearInterval(keepAlive);
+          clearInterval(pollOrders);
+          return;
+        }
         try {
           const [lastOrder, lastServiceOrder] = await Promise.all([
             db.order.findFirst({
@@ -94,6 +109,9 @@ export async function GET() {
       }, 5000);
 
       sendEvent("connected", { ok: true });
+    },
+    cancel() {
+      isClosed = true;
     },
   });
 

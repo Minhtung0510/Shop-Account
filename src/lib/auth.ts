@@ -6,6 +6,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { env } from "@/env/schema";
+import { createAuditLog } from "@/lib/audit";
+
+export const LOGIN_POLICY = {
+  maxFailedAttempts: 5,
+  lockoutDurationMinutes: 15,
+} as const;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -37,17 +43,56 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        if (user.isLocked) {
+          if (user.lockUntil && new Date() > user.lockUntil) {
+            await db.user.update({
+              where: { id: user.id },
+              data: {
+                isLocked: false,
+                lockedAt: null,
+                lockUntil: null,
+                failedLoginAttempts: 0,
+              },
+            });
+          } else {
+            return null;
+          }
+        }
+
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
 
         if (!isValid) {
+          const newAttempts = (user.failedLoginAttempts || 0) + 1;
+          const shouldLock = newAttempts >= LOGIN_POLICY.maxFailedAttempts;
+
+          await db.user.update({
+            where: { id: user.id },
+            data: {
+              failedLoginAttempts: newAttempts,
+              isLocked: shouldLock,
+              lockedAt: shouldLock ? new Date() : null,
+              lockUntil: shouldLock
+                ? new Date(Date.now() + LOGIN_POLICY.lockoutDurationMinutes * 60 * 1000)
+                : null,
+            },
+          });
+
           return null;
         }
 
-        if (user.isLocked) {
-          return null;
+        if (user.failedLoginAttempts > 0 || user.isLocked) {
+          await db.user.update({
+            where: { id: user.id },
+            data: {
+              failedLoginAttempts: 0,
+              isLocked: false,
+              lockedAt: null,
+              lockUntil: null,
+            },
+          });
         }
 
         return {
@@ -74,8 +119,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.id) {
         const dbUser = await db.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, balance: true, rank: true, isLocked: true },
         });
+
         if (dbUser) {
           token.role = dbUser.role;
           token.balance = dbUser.balance;
@@ -91,31 +136,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string;
         session.user.balance = token.balance as number;
         session.user.rank = token.rank as string;
-        (session.user as any).isLocked = token.isLocked as boolean;
       }
       return session;
     },
   },
 });
 
-export const ROLE_LEVELS: Record<string, number> = {
-  SUPER_ADMIN: 1,
-  ADMIN: 2,
-  MODERATOR: 3,
-  STAFF: 4,
-  USER: 5,
-};
-
-export const ROUTE_REQUIREMENTS: Record<string, { minLevel: number }> = {
-  "/adm": { minLevel: 4 },
-  "/adm/san-pham": { minLevel: 2 },
-  "/adm/danh-muc": { minLevel: 2 },
-  "/adm/don-hang": { minLevel: 3 },
-  "/adm/bao-hanh": { minLevel: 3 },
-  "/adm/dich-vu": { minLevel: 2 },
-  "/adm/nguoi-dung": { minLevel: 2 },
-  "/adm/nap-tien": { minLevel: 2 },
-  "/adm/cai-dat": { minLevel: 2 },
-  "/adm/roles": { minLevel: 1 },
-  "/adm/nhat-ky": { minLevel: 2 },
+export const isAdmin = (role: string | undefined) => {
+  return role === "ADMIN";
 };

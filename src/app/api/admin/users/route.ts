@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/require-auth";
 import { createAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
+    
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
@@ -75,6 +79,11 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
+    
     const body = await request.json();
     const { userId, ...updateData } = body;
 
@@ -88,6 +97,20 @@ export async function PUT(request: Request) {
 
     if (!existingUser) {
       return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
+    }
+
+    if (existingUser.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "Không thể sửa đổi thông tin Admin" },
+        { status: 403 }
+      );
+    }
+
+    if (updateData.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "Không thể phong quyền Admin cho người khác" },
+        { status: 403 }
+      );
     }
 
     const updatedUser = await db.user.update({
@@ -111,7 +134,7 @@ export async function PUT(request: Request) {
     });
 
     await createAuditLog({
-      userId: updateData.updatedBy,
+      userId: session.user.id,
       action: "UPDATE",
       entityType: "users",
       entityId: userId,
@@ -142,6 +165,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { authorized, response, session } = await requireAdmin();
+    if (!authorized) return response;
+
+    if (!session) return NextResponse.json({ error: "Lỗi xác thực" }, { status: 500 });
+    
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
@@ -149,16 +177,20 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "User ID là bắt buộc" }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({
+    const targetUser = await db.user.findUnique({
       where: { id: userId },
     });
 
-    if (!user) {
+    if (!targetUser) {
       return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
     }
 
-    if (user.role === "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Không thể xóa Super Admin" }, { status: 403 });
+    if (targetUser.role === "ADMIN") {
+      return NextResponse.json({ error: "Không thể xóa Admin" }, { status: 403 });
+    }
+
+    if (targetUser.id === session.user.id) {
+      return NextResponse.json({ error: "Không thể tự xóa chính mình" }, { status: 400 });
     }
 
     await db.user.delete({
@@ -166,14 +198,14 @@ export async function DELETE(request: Request) {
     });
 
     await createAuditLog({
-      userId: searchParams.get("deletedBy") || undefined,
+      userId: session.user.id,
       action: "DELETE",
       entityType: "users",
       entityId: userId,
       oldValues: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
+        username: targetUser.username,
+        email: targetUser.email,
+        role: targetUser.role,
       },
     });
 

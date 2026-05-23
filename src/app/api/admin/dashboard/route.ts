@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { db } from "@/lib/db";
 import { getRecentAuditLogs } from "@/lib/audit";
 
@@ -7,10 +7,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-    }
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

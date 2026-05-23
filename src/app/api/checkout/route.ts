@@ -13,6 +13,17 @@ function fmt(amount: number): string {
   }).format(amount);
 }
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 async function sendEmailFn(to: string, subject: string, html: string) {
   if (!to || !subject || !html) return;
 
@@ -231,7 +242,7 @@ export async function POST(request: Request) {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Khách hàng</td>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee;">${user.username} (${user.email})</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(user.username)} (${escapeHtml(user.email)})</td>
                 </tr>
                 <tr>
                   <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Mã đơn</td>

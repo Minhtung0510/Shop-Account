@@ -33,11 +33,17 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Không tìm thấy user" }, { status: 404 });
     }
 
-    if (user.password) {
-      const isValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isValid) {
-        return NextResponse.json({ error: "Mật khẩu hiện tại không đúng" }, { status: 400 });
-      }
+    // SECURITY FIX C8: User MUST verify current password
+    // OAuth-only accounts cannot change password without additional verification
+    if (!user.password) {
+      return NextResponse.json({
+        error: "Tài khoản OAuth không thể đổi mật khẩu trực tiếp. Vui lòng liên hệ hỗ trợ để xác thực."
+      }, { status: 403 });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return NextResponse.json({ error: "Mật khẩu hiện tại không đúng" }, { status: 400 });
     }
 
     const hashed = await bcrypt.hash(newPassword, 12);

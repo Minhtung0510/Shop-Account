@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/require-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
+    
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
@@ -67,6 +71,9 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { authorized, response } = await requireAdmin();
+    if (!authorized) return response;
+    
     const { searchParams } = new URL(request.url);
     const daysOld = parseInt(searchParams.get("days") || "90");
     const cutoffDate = new Date();
@@ -83,7 +90,7 @@ export async function DELETE(request: Request) {
       deleted: result.count,
     });
   } catch (error) {
-    console.error("Failed to delete old audit logs:", error);
+    console.error("Failed to delete audit logs:", error);
     return NextResponse.json({ error: "Lỗi khi xóa audit logs" }, { status: 500 });
   }
 }
